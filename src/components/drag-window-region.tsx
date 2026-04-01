@@ -38,7 +38,7 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
         <div className="draglayer flex h-14 items-center px-3">
           <div className="w-20 shrink-0" />
           <div className="mx-auto w-full max-w-xl px-2">
-            <div className="no-drag flex h-9 items-center justify-center rounded-full border border-zinc-300/70 bg-white/85 px-4 text-[11px] text-zinc-500 tracking-wide uppercase shadow-sm dark:border-zinc-700/80 dark:bg-zinc-900/85 dark:text-zinc-400">
+            <div className="no-drag flex h-9 items-center justify-center rounded-full border border-zinc-300/70 bg-white/85 px-4 text-[11px] text-zinc-500 uppercase tracking-wide shadow-sm dark:border-zinc-700/80 dark:bg-zinc-900/85 dark:text-zinc-400">
               {appTitle}
             </div>
           </div>
@@ -47,7 +47,7 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
       ) : (
         <div className="flex h-11 w-full items-stretch justify-between">
           <div className="draglayer flex flex-1 items-center px-3">
-            <div className="select-none whitespace-nowrap text-zinc-500 text-xs tracking-wide uppercase dark:text-zinc-400">
+            <div className="select-none whitespace-nowrap text-xs text-zinc-500 uppercase tracking-wide dark:text-zinc-400">
               {appTitle}
             </div>
           </div>

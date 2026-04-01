@@ -15,7 +15,10 @@ export default function NavigationMenu() {
       <Link className={itemClassName} to="/second">
         {t("titleSecondPage")}
       </Link>
-      <ExternalLink className={itemClassName} href="https://docs.luanroger.dev/electron-shadcn">
+      <ExternalLink
+        className={itemClassName}
+        href="https://docs.luanroger.dev/electron-shadcn"
+      >
         {t("documentation")}
       </ExternalLink>
     </nav>
