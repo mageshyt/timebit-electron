@@ -33,24 +33,12 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   const appTitle = title ?? "TimeBit";
 
   return (
-    <header className="w-full border-zinc-200/70 border-b bg-white/65 backdrop-blur-xl dark:border-zinc-800/70 dark:bg-zinc-950/60">
+    <header className="w-full bg-[#131315]">
       {isMacOS ? (
-        <div className="draglayer flex h-14 items-center px-3">
-          <div className="w-20 shrink-0" />
-          <div className="mx-auto w-full max-w-xl px-2">
-            <div className="no-drag flex h-9 items-center justify-center rounded-full border border-zinc-300/70 bg-white/85 px-4 text-[11px] text-zinc-500 uppercase tracking-wide shadow-sm dark:border-zinc-700/80 dark:bg-zinc-900/85 dark:text-zinc-400">
-              {appTitle}
-            </div>
-          </div>
-          <div className="w-20 shrink-0" />
-        </div>
+        <div className="draglayer h-8 w-full" />
       ) : (
-        <div className="flex h-11 w-full items-stretch justify-between">
-          <div className="draglayer flex flex-1 items-center px-3">
-            <div className="select-none whitespace-nowrap text-xs text-zinc-500 uppercase tracking-wide dark:text-zinc-400">
-              {appTitle}
-            </div>
-          </div>
+        <div className="flex h-8 w-full items-stretch justify-between">
+          <div className="draglayer flex flex-1 items-center px-3" />
           <WindowButtons />
         </div>
       )}
@@ -62,7 +50,7 @@ function WindowButtons() {
   return (
     <div className="no-drag flex items-stretch">
       <button
-        className="px-3 text-zinc-500 transition-colors hover:bg-zinc-200/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="px-3 text-[#e4e4e6] transition-colors hover:bg-[#201f22]"
         onClick={minimizeWindow}
         title="Minimize"
         type="button"
@@ -78,7 +66,7 @@ function WindowButtons() {
         </svg>
       </button>
       <button
-        className="px-3 text-zinc-500 transition-colors hover:bg-zinc-200/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="px-3 text-[#e4e4e6] transition-colors hover:bg-[#201f22]"
         onClick={maximizeWindow}
         title="Maximize"
         type="button"
@@ -101,7 +89,7 @@ function WindowButtons() {
         </svg>
       </button>
       <button
-        className="px-3 text-zinc-500 transition-colors hover:bg-red-400/90 hover:text-white dark:text-zinc-400"
+        className="px-3 text-[#e4e4e6] transition-colors hover:bg-red-500/90 hover:text-[#131315]"
         onClick={closeWindow}
         title="Close"
         type="button"
