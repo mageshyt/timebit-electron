@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import ExternalLink from "./external-link";
 
 export default function NavigationMenu() {
   const { t } = useTranslation();
@@ -12,15 +11,6 @@ export default function NavigationMenu() {
       <Link className={itemClassName} to="/">
         {t("titleHomePage")}
       </Link>
-      <Link className={itemClassName} to="/second">
-        {t("titleSecondPage")}
-      </Link>
-      <ExternalLink
-        className={itemClassName}
-        href="https://docs.luanroger.dev/electron-shadcn"
-      >
-        {t("documentation")}
-      </ExternalLink>
     </nav>
   );
 }

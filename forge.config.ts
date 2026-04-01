@@ -9,9 +9,7 @@ import type { ForgeConfig } from "@electron-forge/shared-types";
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: {
-      unpack: "**/node_modules/{@prisma,prisma}/**",
-    },
+    asar: true,
   },
   rebuildConfig: {},
   makers: [

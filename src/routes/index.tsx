@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { getAppVersion } from "@/actions/app";
-import ExternalLink from "@/components/external-link";
 
 /*
  * Update this page to modify your home page.
@@ -21,10 +20,11 @@ function HomePage() {
 
   return (
     <div className="flex h-full flex-col">
-      <h1 className="text-2xl font-bold">{t("home.welcome")}</h1>
-      <p className="mt-4 text-sm text-gray-500">
+      <h1 className="font-bold text-2xl">{t("home.welcome")}</h1>
+      <p className="mt-4 text-gray-500 text-sm">
         {t("home.version")}: {appVersion}
       </p>
+      test
     </div>
   );
 }
