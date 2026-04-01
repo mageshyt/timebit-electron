@@ -105,3 +105,4 @@ out/
 
 /generated/prisma
 prisma/schema.prisma
+dev.db
