@@ -9,8 +9,56 @@ import {
   Square,
   Zap,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 function HomePage() {
+  const [startTime, setStartTime] = useState<number | null>(Date.now());
+  const [elapsed, setElapsed] = useState<number>(0);
+  const [isActive, setIsActive] = useState<boolean>(true);
+
+  // Re-render tick when active
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | undefined;
+    if (isActive && startTime !== null) {
+      intervalId = setInterval(() => {
+        setElapsed(Date.now() - startTime);
+      }, 100); // 100ms for smooth updates if needed, but we display seconds
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isActive, startTime]);
+
+  const handleToggleTimer = () => {
+    if (isActive) {
+      // Pause
+      setIsActive(false);
+    } else {
+      // Start or Resume
+      if (!startTime) {
+        setStartTime(Date.now());
+        setElapsed(0);
+      } else {
+        // Adjust start time so elapsed resumes smoothly
+        setStartTime(Date.now() - elapsed);
+      }
+      setIsActive(true);
+    }
+  };
+
+  const handleReset = () => {
+    setIsActive(false);
+    setStartTime(null);
+    setElapsed(0);
+  };
+
+  const formatElapsed = () => {
+    const totalSeconds = Math.floor(elapsed / 1000);
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  };
+
   return (
     <div className="flex h-full w-full flex-col ">
       {/* Main Content Area */}
@@ -59,23 +107,32 @@ function HomePage() {
                 <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] mb-6">Cycle Time</span>
                 {/* Display-LG */}
                 <div className="text-[3.5rem] font-bold tracking-[-0.04em] text-[#f4f4f5] leading-none tabular-nums mb-6">
-                  24:42
+                  {startTime !== null ? formatElapsed() : "00:00"}
                 </div>
                 <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] px-4 py-1.5 rounded-full bg-[#201f22] text-[#c0c1ff]">
-                  Deep Focus Active
+                  {isActive ? "Deep Focus Active" : "Session Paused"}
                 </div>
               </div>
 
               {/* Controls */}
               <div className="flex items-center justify-center space-x-6 mt-4 mb-8">
-                <button className="w-12 h-12 flex items-center justify-center rounded-full bg-[#201f22] text-[#8e8d92] hover:bg-[#2a2a2c] transition-colors">
+                <button 
+                  onClick={handleReset}
+                  className="w-12 h-12 flex items-center justify-center rounded-full bg-[#201f22] text-[#8e8d92] hover:bg-[#2a2a2c] transition-colors"
+                >
                   <SkipBack className="h-5 w-5" />
                 </button>
-                {/* Massive CTA for pausing */}
-                <button className="px-10 py-4 bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] text-[#131315] text-[0.875rem] font-bold uppercase tracking-[0.05em] rounded-xl hover:opacity-90 transition-opacity drop-shadow-[0_8px_32px_rgba(192,193,255,0.2)]">
-                  Pause Session
+                {/* Massive CTA for pausing/playing */}
+                <button 
+                  onClick={handleToggleTimer}
+                  className="px-10 py-4 bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] text-[#131315] text-[0.875rem] font-bold uppercase tracking-[0.05em] rounded-xl hover:opacity-90 transition-opacity drop-shadow-[0_8px_32px_rgba(192,193,255,0.2)] w-48"
+                >
+                  {isActive ? "Pause Session" : "Start Session"}
                 </button>
-                <button className="w-12 h-12 flex items-center justify-center rounded-full bg-[#201f22] text-[#8e8d92] hover:bg-[#2a2a2c] transition-colors">
+                <button 
+                  onClick={handleReset}
+                  className="w-12 h-12 flex items-center justify-center rounded-full bg-[#201f22] text-[#8e8d92] hover:bg-[#2a2a2c] transition-colors"
+                >
                   <Square className="h-4 w-4" fill="currentColor" />
                 </button>
               </div>
