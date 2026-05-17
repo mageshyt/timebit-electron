@@ -24,6 +24,7 @@ type SyncStatusState = {
   esp32Connected: boolean;
   esp32Version: string | null;
   lastSeenAt: number | null;
+  latencyMs: number | null;
 };
 
 type SyncStatusContextValue = {
@@ -35,9 +36,11 @@ const defaultState: SyncStatusState = {
   esp32Connected: false,
   esp32Version: null,
   lastSeenAt: null,
+  latencyMs: null,
 };
 
 const ESP32_OFFLINE_TIMEOUT_MS = 25000;
+const LATENCY_PING_INTERVAL_MS = 10000;
 
 const SyncStatusContext = createContext<SyncStatusContextValue | null>(null);
 
@@ -65,6 +68,9 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     let active = true;
     let socket: WebSocket | null = null;
     let offlineTimer: number | null = null;
+    let latencyTimer: number | null = null;
+    const clientId = crypto.randomUUID();
+    let pendingPingSentAt: number | null = null;
 
     const syncServerUrl = resolveSyncServerUrl();
 
@@ -124,20 +130,32 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       socket.addEventListener("message", (event) => {
         try {
           const data = JSON.parse(event.data) as SyncEvent;
-          if (data.type !== "esp32:status") {
-            return;
-          }
-          const esp = parseEsp32Status(data.payload);
-          if (!esp) {
+          if (data.type === "esp32:status") {
+            const esp = parseEsp32Status(data.payload);
+            if (!esp) {
+              return;
+            }
+
+            setState((prev) => ({
+              ...prev,
+              esp32Connected: esp.connected ?? prev.esp32Connected,
+              esp32Version: esp.version ?? prev.esp32Version,
+              lastSeenAt: Date.now(),
+            }));
             return;
           }
 
-          setState((prev) => ({
-            ...prev,
-            esp32Connected: esp.connected ?? prev.esp32Connected,
-            esp32Version: esp.version ?? prev.esp32Version,
-            lastSeenAt: Date.now(),
-          }));
+          if (data.type === "ping") {
+            const payload = data.payload as { clientId?: string; sentAt?: number } | undefined;
+            if (payload?.clientId === clientId && typeof payload.sentAt === "number") {
+              const rtt = Date.now() - payload.sentAt;
+              setState((prev) => ({
+                ...prev,
+                latencyMs: rtt,
+              }));
+              pendingPingSentAt = null;
+            }
+          }
         } catch {
           // Ignore malformed payloads
         }
@@ -151,14 +169,40 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       });
     };
 
+    const scheduleLatencyPing = () => {
+      if (latencyTimer) {
+        window.clearInterval(latencyTimer);
+      }
+      latencyTimer = window.setInterval(() => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+        const now = Date.now();
+        if (pendingPingSentAt && now - pendingPingSentAt < LATENCY_PING_INTERVAL_MS) {
+          return;
+        }
+        pendingPingSentAt = now;
+        socket.send(
+          JSON.stringify({
+            type: "ping",
+            payload: { clientId, sentAt: now },
+          })
+        );
+      }, LATENCY_PING_INTERVAL_MS);
+    };
+
     void checkHealth();
     scheduleOfflineCheck();
     connectWebSocket();
+    scheduleLatencyPing();
 
     return () => {
       active = false;
       if (offlineTimer) {
         window.clearInterval(offlineTimer);
+      }
+      if (latencyTimer) {
+        window.clearInterval(latencyTimer);
       }
       socket?.close();
     };

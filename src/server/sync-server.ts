@@ -18,11 +18,25 @@ type BootstrapState = {
   settings: Record<string, unknown>;
 };
 
+type SummaryResponse = {
+  tasks: { completed: number; total: number };
+  habits: { completed: number; total: number };
+};
+
 const defaultBootstrapState: BootstrapState = {
   tasks: [],
   habits: [],
   pomodoro: {},
   settings: {},
+};
+
+const summaryFromBootstrap = (state: BootstrapState): SummaryResponse => {
+  const tasksTotal = state.tasks.length;
+  const habitsTotal = state.habits.length;
+  return {
+    tasks: { completed: 0, total: tasksTotal },
+    habits: { completed: 0, total: habitsTotal },
+  };
 };
 
 const sendJson = (res: http.ServerResponse, status: number, body: unknown) => {
@@ -49,6 +63,11 @@ export const startSyncServer = ({ port }: SyncServerOptions) => {
 
     if (req.method === "GET" && req.url === "/bootstrap") {
       sendJson(res, 200, defaultBootstrapState);
+      return;
+    }
+
+    if (req.method === "GET" && req.url === "/summary") {
+      sendJson(res, 200, summaryFromBootstrap(defaultBootstrapState));
       return;
     }
 
