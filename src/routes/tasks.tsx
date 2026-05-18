@@ -1,189 +1,85 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
 import { Plus, Filter } from "lucide-react";
 import { TaskTable } from "@/features/tasks/components/task-table";
-import { TaskDialog } from "@/features/tasks/components/task-dialog";
 import { TaskFilterTabs } from "@/features/tasks/components/task-filter-tabs";
-import { EMPTY_FORM } from "@/features/tasks/data";
-import type { Task, TaskForm, FilterTab } from "@/features/tasks/types";
-import { getSyncServerUrl } from "@/state/sync-status";
+import { TaskDialogManager } from "@/features/tasks/components/task-dialog-manager";
+import { useTaskActions, PAGE_SIZE } from "@/features/tasks/task.hooks";
+import { useTaskStore } from "@/features/tasks/task.store";
 
-const PAGE_SIZE = 4;
+const TABLE_GRID = "40px 180px 1fr 130px 130px 80px";
 
-type TaskResponse = Task & {
-  createdAt: string;
-  updatedAt: string;
-};
+function TaskTableSkeleton() {
+  const rows = Array.from({ length: PAGE_SIZE }, (_, index) => index);
 
-type TaskListResponse = {
-  data: TaskResponse[];
-  meta: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-  };
-};
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: "#131315" }}>
+      <div
+        className="grid items-center px-6 py-3"
+        style={{ gridTemplateColumns: TABLE_GRID, background: "#0e0e10" }}
+      >
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div
+            key={`header-skeleton-${index}`}
+            className="h-2.5 rounded-full bg-[#2a2a2c]"
+            style={{ width: index === 2 ? "60%" : "50%" }}
+          />
+        ))}
+      </div>
 
-type TaskSummaryResponse = {
-  tasks: {
-    total: number;
-    completed: number;
-    remaining: number;
-  };
-};
+      <div className="animate-pulse">
+        {rows.map((row) => (
+          <div
+            key={`row-skeleton-${row}`}
+            className="grid items-center px-6 py-4"
+            style={{
+              gridTemplateColumns: TABLE_GRID,
+              background: row % 2 === 0 ? "#131315" : "#0f0f11",
+            }}
+          >
+            <div className="h-4 w-4 rounded bg-[#2a2a2c]" />
+            <div className="h-4 w-20 rounded bg-[#2a2a2c]" />
+            <div className="space-y-2">
+              <div className="h-4 w-48 rounded bg-[#2a2a2c]" />
+              <div className="h-3 w-32 rounded bg-[#242326]" />
+            </div>
+            <div className="h-4 w-16 rounded bg-[#2a2a2c]" />
+            <div className="h-4 w-14 rounded bg-[#2a2a2c]" />
+            <div className="h-4 w-10 rounded bg-[#2a2a2c]" />
+          </div>
+        ))}
+      </div>
 
-type TaskSummary = TaskSummaryResponse["tasks"];
-
-const normalizeTask = (task: TaskResponse): Task => ({
-  id: task.id,
-  title: task.title,
-  subtitle: task.subtitle,
-  status: task.status,
-  priority: task.priority,
-  estimate: task.estimate,
-  done: task.done,
-});
-
-const fetchJson = async <T,>(input: RequestInfo, init?: RequestInit): Promise<T> => {
-  const response = await fetch(input, init);
-  if (!response.ok) {
-    throw new Error(`Request failed with ${response.status}`);
-  }
-  return (await response.json()) as T;
-};
-
-const buildTasksUrl = (baseUrl: string, page: number, pageSize: number) => {
-  const url = new URL("/tasks", baseUrl);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("pageSize", String(pageSize));
-  return url.toString();
-};
-
-const buildSummaryUrl = (baseUrl: string) => new URL("/summary", baseUrl).toString();
+      <div
+        className="flex items-center justify-between px-6 py-4"
+        style={{ background: "#0e0e10" }}
+      >
+        <div className="h-3 w-40 rounded bg-[#2a2a2c]" />
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded bg-[#1c1b1d]" />
+          <div className="h-7 w-7 rounded bg-[#1c1b1d]" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function TasksPage() {
-  const syncServerUrl = useMemo(() => getSyncServerUrl(), []);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>("Today");
-  const [page, setPage] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [summary, setSummary] = useState<TaskSummary>({
-    total: 0,
-    completed: 0,
-    remaining: 0,
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Task | null>(null);
+  const {
+    tasks,
+    total,
+    totalPages,
+    remaining,
+    isLoading,
+    isFetching,
+    errorMessage,
+    refresh,
+    createTask,
+    updateTask,
+    deleteTask,
+    toggleTask,
+  } = useTaskActions();
 
-  const remaining = summary.total > 0
-    ? summary.remaining
-    : tasks.filter((t) => !t.done).length;
-
-  const loadTasks = async (targetPage: number) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const listUrl = buildTasksUrl(syncServerUrl, targetPage + 1, PAGE_SIZE);
-      const response = await fetchJson<TaskListResponse>(listUrl);
-      const normalized = response.data.map(normalizeTask);
-
-      setTasks(normalized);
-      setTotal(response.meta.total);
-
-      const summaryUrl = buildSummaryUrl(syncServerUrl);
-      const summaryResponse = await fetchJson<TaskSummaryResponse>(summaryUrl);
-      setSummary(summaryResponse.tasks);
-
-      if (response.meta.totalPages > 0 && targetPage > response.meta.totalPages - 1) {
-        setPage(response.meta.totalPages - 1);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load tasks";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadTasks(page);
-  }, [page, syncServerUrl]);
-
-  // ── Handlers ────────────────────────────────────────────────────────────
-
-  const handleAdd = (form: TaskForm) => {
-    void (async () => {
-      await fetchJson<TaskResponse>(`${syncServerUrl}/tasks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          subtitle: form.subtitle,
-          status: form.status,
-          priority: form.priority,
-          estimate: form.estimate,
-          done: form.status === "DONE",
-        }),
-      });
-      setPage(0);
-      await loadTasks(0);
-    })();
-  };
-
-  const handleEdit = (form: TaskForm) => {
-    if (!editTarget) return;
-    void (async () => {
-      await fetchJson<TaskResponse>(`${syncServerUrl}/tasks/${editTarget.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          subtitle: form.subtitle,
-          status: form.status,
-          priority: form.priority,
-          estimate: form.estimate,
-          done: form.status === "DONE",
-        }),
-      });
-      await loadTasks(page);
-    })();
-  };
-
-  const handleDelete = (id: number) => {
-    void (async () => {
-      await fetchJson<{ data: { id: number } }>(`${syncServerUrl}/tasks/${id}`, {
-        method: "DELETE",
-      });
-      await loadTasks(page);
-    })();
-  };
-
-  const handleToggle = (id: number) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
-    const done = !task.done;
-    const status = done ? "DONE" : "TODO";
-
-    void (async () => {
-      await fetchJson<TaskResponse>(`${syncServerUrl}/tasks/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done, status }),
-      });
-      await loadTasks(page);
-    })();
-  };
-
-  const handleFilterChange = (tab: FilterTab) => {
-    setActiveFilter(tab);
-    setPage(0);
-  };
-
-  // ────────────────────────────────────────────────────────────────────────
+  const { page, setPage, openAdd, openEdit, activeFilter, setActiveFilter } = useTaskStore();
 
   return (
     <div className="flex h-full w-full flex-col p-6 pb-8 overflow-y-auto">
@@ -208,7 +104,7 @@ function TasksPage() {
         </div>
 
         <div className="flex items-center gap-3 mt-1">
-          <TaskFilterTabs active={activeFilter} onChange={handleFilterChange} />
+          <TaskFilterTabs active={activeFilter} onChange={setActiveFilter} />
 
           <button
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] hover:text-[#e4e4e6] transition-colors"
@@ -219,7 +115,7 @@ function TasksPage() {
           </button>
 
           <button
-            onClick={() => setAddOpen(true)}
+            onClick={openAdd}
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#131315] bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] hover:opacity-90 transition-opacity drop-shadow-[0_4px_24px_rgba(192,193,255,0.2)]"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -228,53 +124,49 @@ function TasksPage() {
         </div>
       </div>
 
-      {/* Table */}
-      {error ? (
-        <div className="mb-3 rounded-lg bg-[#1c1b1d] px-4 py-3 text-[0.75rem] text-[#ff9b9b]">
-          Failed to load tasks: {error}
+      {/* Status banners */}
+      {errorMessage ? (
+        <div className="mb-4 rounded-lg border border-[#3a2a2a] bg-[#1c1b1d] px-4 py-3 text-[0.75rem] text-[#ffb4b4]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-semibold text-[#ffd1d1]">Unable to load tasks</div>
+              <div className="text-[#ffb4b4]">
+                {errorMessage} — check that the sync server is running and try again.
+              </div>
+            </div>
+            <button
+              onClick={refresh}
+              className="rounded-md bg-[#2a2a2c] px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#f4f4f5] hover:bg-[#353437]"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       ) : null}
-      {loading ? (
+      {isFetching && !isLoading ? (
         <div className="mb-3 rounded-lg bg-[#1c1b1d] px-4 py-3 text-[0.75rem] text-[#8e8d92]">
-          Loading tasks…
+          Updating tasks…
         </div>
       ) : null}
-      <TaskTable
-        tasks={tasks}
-        total={total}
-        page={page}
-        pageSize={PAGE_SIZE}
-        onPageChange={setPage}
-        onToggle={handleToggle}
-        onEdit={setEditTarget}
-        onDelete={handleDelete}
-      />
 
-      {/* Dialogs */}
-      <TaskDialog
-        open={addOpen}
-        title="New Task"
-        initial={EMPTY_FORM}
-        onClose={() => setAddOpen(false)}
-        onSave={handleAdd}
-      />
-      <TaskDialog
-        open={!!editTarget}
-        title="Edit Task"
-        initial={
-          editTarget
-            ? {
-                title: editTarget.title,
-                subtitle: editTarget.subtitle,
-                status: editTarget.status,
-                priority: editTarget.priority,
-                estimate: editTarget.estimate,
-              }
-            : EMPTY_FORM
-        }
-        onClose={() => setEditTarget(null)}
-        onSave={handleEdit}
-      />
+      {/* Table */}
+      {isLoading ? (
+        <TaskTableSkeleton />
+      ) : (
+        <TaskTable
+          tasks={tasks}
+          total={total}
+          page={page}
+          pageSize={PAGE_SIZE}
+          onPageChange={(p) => setPage(p, totalPages)}
+          onToggle={toggleTask}
+          onEdit={openEdit}
+          onDelete={deleteTask}
+        />
+      )}
+
+      {/* Dialogs — self-managed via Zustand store */}
+      <TaskDialogManager onAdd={createTask} onEdit={updateTask} />
     </div>
   );
 }
