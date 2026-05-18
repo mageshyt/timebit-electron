@@ -7,6 +7,7 @@ import {
   listTasks,
   updateTask,
   type ServerTask,
+  type TaskDateRange,
   type TaskPriority,
   type TaskStatus,
 } from "../services/tasks.service";
@@ -27,6 +28,9 @@ const isTaskStatus = (value: string | null): value is TaskStatus =>
 const isTaskPriority = (value: string | null): value is TaskPriority =>
   value === "High" || value === "Medium" || value === "Low";
 
+const isTaskRange = (value: string | null): value is TaskDateRange =>
+  value === "today" || value === "week" || value === "all";
+
 // ─── Route handlers ───────────────────────────────────────────────────────────
 
 /** GET /tasks */
@@ -40,13 +44,22 @@ export async function listTasksRoute(
     parsePositiveInt(url.searchParams.get("pageSize"), 20),
     MAX_PAGE_SIZE,
   );
+  const rangeParam = url.searchParams.get("range");
+  const range = isTaskRange(rangeParam) ? rangeParam : undefined;
   const statusParam = url.searchParams.get("status");
   const priorityParam = url.searchParams.get("priority");
   const status = isTaskStatus(statusParam) ? statusParam : undefined;
   const priority = isTaskPriority(priorityParam) ? priorityParam : undefined;
   const query = url.searchParams.get("q")?.trim() || undefined;
 
-  const result = await listTasks({ page, pageSize, status, priority, query });
+  const result = await listTasks({
+    page,
+    pageSize,
+    range,
+    status,
+    priority,
+    query,
+  });
 
   sendJson(res, 200, {
     data: result.data,

@@ -3,6 +3,7 @@ import { getPrismaClient } from "../db";
 
 export type TaskStatus = "TODO" | "IN PROGRESS" | "DONE";
 export type TaskPriority = "High" | "Medium" | "Low";
+export type TaskDateRange = "today" | "week" | "all";
 
 export interface ServerTask {
   id: number;
@@ -19,6 +20,7 @@ export interface ServerTask {
 export interface TaskListInput {
   page: number;
   pageSize: number;
+  range?: TaskDateRange;
   status?: TaskStatus;
   priority?: TaskPriority;
   query?: string;
@@ -68,8 +70,39 @@ const serializeTask = (task: PrismaTask): ServerTask => ({
   updatedAt: task.updatedAt.toISOString(),
 });
 
+const startOfDay = (value: Date): Date =>
+  new Date(value.getFullYear(), value.getMonth(), value.getDate());
+
+const addDays = (value: Date, days: number): Date => {
+  const next = new Date(value);
+  next.setDate(value.getDate() + days);
+  return next;
+};
+
+const buildRangeWhere = (range?: TaskDateRange): Prisma.TaskWhereInput => {
+  if (!range || range === "all") {
+    return {};
+  }
+
+  const now = new Date();
+  if (range === "today") {
+    const start = startOfDay(now);
+    const end = addDays(start, 1);
+    return { createdAt: { gte: start, lt: end } };
+  }
+
+  const start = startOfDay(now);
+  const day = start.getDay();
+  const offset = (day + 6) % 7;
+  start.setDate(start.getDate() - offset);
+  const end = addDays(start, 7);
+  return { createdAt: { gte: start, lt: end } };
+};
+
 const buildWhere = (input: TaskListInput): Prisma.TaskWhereInput => {
-  const where: Prisma.TaskWhereInput = {};
+  const where: Prisma.TaskWhereInput = {
+    ...buildRangeWhere(input.range),
+  };
 
   if (input.status) {
     where.status = input.status;
@@ -191,11 +224,14 @@ export const deleteTask = async (id: number): Promise<boolean> => {
   return true;
 };
 
-export const getTaskSummary = async (): Promise<TaskSummary> => {
+export const getTaskSummary = async (
+  range?: TaskDateRange,
+): Promise<TaskSummary> => {
   const prisma = getPrismaClient();
+  const baseWhere = buildRangeWhere(range);
   const [total, completed] = await Promise.all([
-    prisma.task.count(),
-    prisma.task.count({ where: { done: true } }),
+    prisma.task.count({ where: baseWhere }),
+    prisma.task.count({ where: { ...baseWhere, done: true } }),
   ]);
 
   return {
