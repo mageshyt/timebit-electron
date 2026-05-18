@@ -7,6 +7,7 @@ const GRID = "40px 180px 1fr 130px 130px 80px";
 
 interface Props {
   tasks: Task[];
+  total: number;
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -17,6 +18,7 @@ interface Props {
 
 export function TaskTable({
   tasks,
+  total,
   page,
   pageSize,
   onPageChange,
@@ -24,8 +26,11 @@ export function TaskTable({
   onEdit,
   onDelete,
 }: Props) {
-  const totalPages = Math.ceil(tasks.length / pageSize);
-  const visible = tasks.slice(page * pageSize, page * pageSize + pageSize);
+  const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
+  const visible = tasks;
+  const canGoBack = page > 0;
+  const canGoForward = totalPages > 0 && page < totalPages - 1;
+  const lastPage = totalPages > 0 ? totalPages - 1 : 0;
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: "#131315" }}>
@@ -64,20 +69,20 @@ export function TaskTable({
         style={{ background: "#0e0e10" }}
       >
         <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#5c5b61]">
-          Showing {visible.length} of {tasks.length} tasks
+          Showing {visible.length} of {total} tasks
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onPageChange(Math.max(0, page - 1))}
-            disabled={page === 0}
+            disabled={!canGoBack}
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30"
             style={{ background: "#1c1b1d", color: "#8e8d92" }}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
-            disabled={page >= totalPages - 1}
+            onClick={() => onPageChange(Math.min(lastPage, page + 1))}
+            disabled={!canGoForward}
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30"
             style={{ background: "#1c1b1d", color: "#8e8d92" }}
           >

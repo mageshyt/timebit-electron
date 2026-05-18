@@ -9,6 +9,7 @@ import { UpdateSourceType, updateElectronApp } from "update-electron-app";
 import { ipcContext } from "@/ipc/context";
 import { IPC_CHANNELS, inDevelopment } from "./constants";
 import { startSyncServer } from "./server/sync-server";
+import { connectDatabase, disconnectDatabase } from "./server/db";
 import { getBasePath } from "./utils/path";
 
 function createWindow() {
@@ -75,10 +76,15 @@ app.whenReady().then(async () => {
     await installExtensions();
     checkForUpdates();
     await setupORPC();
+    await connectDatabase();
     startSyncServer({ port: 5719 });
   } catch (error) {
     console.error("Error during app initialization:", error);
   }
+});
+
+app.on("before-quit", () => {
+  void disconnectDatabase();
 });
 
 //osX only
