@@ -1,64 +1,62 @@
 import type http from "node:http";
-import { sendJson, readBody } from "../router";
+import { readBody, sendJson } from "../router";
 import { broadcaster } from "../ws/broadcaster";
+import {
+  createTask,
+  deleteTask,
+  listTasks,
+  updateTask,
+  type ServerTask,
+  type TaskPriority,
+  type TaskStatus,
+} from "../services/tasks.service";
 
-// ─── In-memory store (swap for DB layer later) ────────────────────────────────
+const MAX_PAGE_SIZE = 100;
 
-export interface ServerTask {
-  id: number;
-  title: string;
-  subtitle: string;
-  status: "TODO" | "IN PROGRESS" | "DONE";
-  priority: "High" | "Medium" | "Low";
-  estimate: string;
-  done: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-class TaskStore {
-  private tasks: ServerTask[] = [];
-  private nextId = 1;
-
-  list(): ServerTask[] {
-    return this.tasks;
+const parsePositiveInt = (value: string | null, fallback: number): number => {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (Number.isNaN(parsed) || parsed < 1) {
+    return fallback;
   }
+  return parsed;
+};
 
-  get(id: number): ServerTask | undefined {
-    return this.tasks.find((t) => t.id === id);
-  }
+const isTaskStatus = (value: string | null): value is TaskStatus =>
+  value === "TODO" || value === "IN PROGRESS" || value === "DONE";
 
-  create(input: Omit<ServerTask, "id" | "createdAt" | "updatedAt">): ServerTask {
-    const now = new Date().toISOString();
-    const task: ServerTask = { ...input, id: this.nextId++, createdAt: now, updatedAt: now };
-    this.tasks.unshift(task);
-    return task;
-  }
-
-  update(id: number, patch: Partial<Omit<ServerTask, "id" | "createdAt">>): ServerTask | null {
-    const idx = this.tasks.findIndex((t) => t.id === id);
-    if (idx === -1) return null;
-    this.tasks[idx] = { ...this.tasks[idx], ...patch, updatedAt: new Date().toISOString() };
-    return this.tasks[idx];
-  }
-
-  delete(id: number): boolean {
-    const before = this.tasks.length;
-    this.tasks = this.tasks.filter((t) => t.id !== id);
-    return this.tasks.length < before;
-  }
-}
-
-export const taskStore = new TaskStore();
+const isTaskPriority = (value: string | null): value is TaskPriority =>
+  value === "High" || value === "Medium" || value === "Low";
 
 // ─── Route handlers ───────────────────────────────────────────────────────────
 
 /** GET /tasks */
-export function listTasksRoute(
-  _req: http.IncomingMessage,
+export async function listTasksRoute(
+  req: http.IncomingMessage,
   res: http.ServerResponse,
-): void {
-  sendJson(res, 200, { data: taskStore.list() });
+): Promise<void> {
+  const url = new URL(req.url ?? "/tasks", "http://localhost");
+  const page = parsePositiveInt(url.searchParams.get("page"), 1);
+  const pageSize = Math.min(
+    parsePositiveInt(url.searchParams.get("pageSize"), 20),
+    MAX_PAGE_SIZE,
+  );
+  const statusParam = url.searchParams.get("status");
+  const priorityParam = url.searchParams.get("priority");
+  const status = isTaskStatus(statusParam) ? statusParam : undefined;
+  const priority = isTaskPriority(priorityParam) ? priorityParam : undefined;
+  const query = url.searchParams.get("q")?.trim() || undefined;
+
+  const result = await listTasks({ page, pageSize, status, priority, query });
+
+  sendJson(res, 200, {
+    data: result.data,
+    meta: {
+      page: result.page,
+      pageSize: result.pageSize,
+      total: result.total,
+      totalPages: result.totalPages,
+    },
+  });
 }
 
 /** POST /tasks */
@@ -73,13 +71,23 @@ export async function createTaskRoute(
     return;
   }
 
-  const task = taskStore.create({
+  if (body.status && !isTaskStatus(body.status)) {
+    sendJson(res, 400, { error: "Invalid status" });
+    return;
+  }
+
+  if (body.priority && !isTaskPriority(body.priority)) {
+    sendJson(res, 400, { error: "Invalid priority" });
+    return;
+  }
+
+  const task = await createTask({
     title: body.title.trim(),
     subtitle: body.subtitle ?? "",
-    status: body.status ?? "TODO",
-    priority: body.priority ?? "Medium",
+    status: body.status,
+    priority: body.priority,
     estimate: body.estimate ?? "",
-    done: body.status === "DONE",
+    done: body.done,
   });
 
   broadcaster.broadcast({ type: "task:created", payload: task });
@@ -93,12 +101,30 @@ export async function updateTaskRoute(
   id: number,
 ): Promise<void> {
   const body = await readBody<Partial<ServerTask>>(req);
-  const patch = { ...body };
-  if (patch.status !== undefined) {
-    patch.done = patch.status === "DONE";
+
+  if (body.title !== undefined && !body.title.trim()) {
+    sendJson(res, 400, { error: "title cannot be empty" });
+    return;
   }
 
-  const updated = taskStore.update(id, patch);
+  if (body.status && !isTaskStatus(body.status)) {
+    sendJson(res, 400, { error: "Invalid status" });
+    return;
+  }
+
+  if (body.priority && !isTaskPriority(body.priority)) {
+    sendJson(res, 400, { error: "Invalid priority" });
+    return;
+  }
+
+  const updated = await updateTask(id, {
+    title: body.title?.trim(),
+    subtitle: body.subtitle,
+    status: body.status,
+    priority: body.priority,
+    estimate: body.estimate,
+    done: body.done,
+  });
   if (!updated) {
     sendJson(res, 404, { error: "Task not found" });
     return;
@@ -109,12 +135,12 @@ export async function updateTaskRoute(
 }
 
 /** DELETE /tasks/:id */
-export function deleteTaskRoute(
+export async function deleteTaskRoute(
   _req: http.IncomingMessage,
   res: http.ServerResponse,
   id: number,
-): void {
-  const deleted = taskStore.delete(id);
+): Promise<void> {
+  const deleted = await deleteTask(id);
   if (!deleted) {
     sendJson(res, 404, { error: "Task not found" });
     return;

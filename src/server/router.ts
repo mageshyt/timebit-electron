@@ -51,6 +51,8 @@ function extractId(url: string, prefix: string): number | null {
 export function createRouter(): http.RequestListener {
   return (req, res) => {
     const { method = "GET", url = "/" } = req;
+    const requestUrl = new URL(url, "http://localhost");
+    const pathname = requestUrl.pathname;
 
     // OPTIONS pre-flight (for dev tools / cross-origin access)
     if (method === "OPTIONS") {
@@ -60,42 +62,42 @@ export function createRouter(): http.RequestListener {
     }
 
     // GET /health
-    if (method === "GET" && url === "/health") {
+    if (method === "GET" && pathname === "/health") {
       healthRoute(req, res);
       return;
     }
 
     // GET /summary
-    if (method === "GET" && url === "/summary") {
-      summaryRoute(req, res);
+    if (method === "GET" && pathname === "/summary") {
+      void summaryRoute(req, res);
       return;
     }
 
     // GET /tasks
-    if (method === "GET" && url === "/tasks") {
-      listTasksRoute(req, res);
+    if (method === "GET" && pathname === "/tasks") {
+      void listTasksRoute(req, res);
       return;
     }
 
     // POST /tasks
-    if (method === "POST" && url === "/tasks") {
+    if (method === "POST" && pathname === "/tasks") {
       void createTaskRoute(req, res);
       return;
     }
 
     // PATCH /tasks/:id
-    if (method === "PATCH" && url.startsWith("/tasks/")) {
-      const id = extractId(url, "/tasks/");
+    if (method === "PATCH" && pathname.startsWith("/tasks/")) {
+      const id = extractId(pathname, "/tasks/");
       if (id === null) { sendJson(res, 400, { error: "Invalid id" }); return; }
       void updateTaskRoute(req, res, id);
       return;
     }
 
     // DELETE /tasks/:id
-    if (method === "DELETE" && url.startsWith("/tasks/")) {
-      const id = extractId(url, "/tasks/");
+    if (method === "DELETE" && pathname.startsWith("/tasks/")) {
+      const id = extractId(pathname, "/tasks/");
       if (id === null) { sendJson(res, 400, { error: "Invalid id" }); return; }
-      deleteTaskRoute(req, res, id);
+      void deleteTaskRoute(req, res, id);
       return;
     }
 
