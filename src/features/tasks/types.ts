@@ -19,3 +19,39 @@ export interface TaskForm {
   priority: TaskPriority;
   estimate: string;
 }
+
+export type TaskResponse = Task & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TaskListResponse = {
+  data: TaskResponse[];
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+export type TaskSummaryResponse = {
+  tasks: {
+    total: number;
+    completed: number;
+    remaining: number;
+  };
+};
+
+export type TaskRange = "today" | "week" | "all";
+
+export type TaskUpdatePayload = {
+  id: number;
+  form: TaskForm;
+};
+
+export type TaskTogglePayload = {
+  id: number;
+  done: boolean;
+  status: Task["status"];
+};
