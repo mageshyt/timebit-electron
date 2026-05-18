@@ -7,6 +7,7 @@ import { syncWithLocalTheme } from "./actions/theme";
 import { SyncStatusProvider } from "./state/sync-status";
 import { router } from "./utils/routes";
 import "./localization/i18n";
+import QueryProvider from "./provider/query-provider";
 
 export default function App() {
   const { i18n } = useTranslation();
@@ -17,9 +18,11 @@ export default function App() {
   }, [i18n]);
 
   return (
-    <SyncStatusProvider>
-      <RouterProvider router={router} />
-    </SyncStatusProvider>
+    <QueryProvider>
+      <SyncStatusProvider>
+        <RouterProvider router={router} />
+      </SyncStatusProvider>
+    </QueryProvider>
   );
 }
 
