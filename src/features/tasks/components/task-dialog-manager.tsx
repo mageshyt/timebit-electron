@@ -45,6 +45,8 @@ export function TaskDialogManager({ onAdd, onEdit }: Props) {
                 status: editTarget.status,
                 priority: editTarget.priority,
                 estimate: editTarget.estimate,
+                scheduleAt: editTarget.scheduleAt ?? undefined,
+                dueTime: editTarget.dueTime ?? undefined,
               }
             : EMPTY_FORM
         }

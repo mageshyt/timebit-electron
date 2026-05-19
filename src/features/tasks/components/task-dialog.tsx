@@ -15,6 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import type { TaskForm, TaskStatus, TaskPriority } from "../types";
 
 interface Props {
@@ -42,7 +47,7 @@ export function TaskDialog({ open, title, initial, onClose, onSave }: Props) {
     onClose();
   };
 
-  const field = (key: keyof TaskForm, value: string) =>
+  const field = <K extends keyof TaskForm>(key: K, value: TaskForm[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   return (
@@ -162,6 +167,58 @@ export function TaskDialog({ open, title, initial, onClose, onSave }: Props) {
                 placeholder="e.g. 1h 30m"
                 className="w-full h-9 border-0 bg-[#201f22] text-[#e4e4e6] placeholder:text-[#636268] focus-visible:ring-[#c0c1ff]/30 focus-visible:ring-1 text-[0.8125rem]"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Schedule For */}
+            <div>
+              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] mb-1.5 block">
+                Schedule For
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`w-full h-9 border-0 bg-[#201f22] hover:bg-[#201f22]/80 hover:text-[#e4e4e6] text-[#e4e4e6] text-[0.8125rem] justify-start text-left font-normal ${!form.scheduleAt && "text-[#636268]"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                    {form.scheduleAt ? format(new Date(form.scheduleAt), "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 border-0 rounded-xl" style={{ background: "#2a2a2c", boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)" }}>
+                  <Calendar
+                    mode="single"
+                    selected={form.scheduleAt ? new Date(form.scheduleAt) : undefined}
+                    onSelect={(date) => field("scheduleAt", date ? date.toISOString() : undefined)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Due Time */}
+            <div>
+              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] mb-1.5 block">
+                Due Time
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`w-full h-9 border-0 bg-[#201f22] hover:bg-[#201f22]/80 hover:text-[#e4e4e6] text-[#e4e4e6] text-[0.8125rem] justify-start text-left font-normal ${!form.dueTime && "text-[#636268]"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                    {form.dueTime ? format(new Date(form.dueTime), "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 border-0 rounded-xl" style={{ background: "#2a2a2c", boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)" }}>
+                  <Calendar
+                    mode="single"
+                    selected={form.dueTime ? new Date(form.dueTime) : undefined}
+                    onSelect={(date) => field("dueTime", date ? date.toISOString() : undefined)}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
