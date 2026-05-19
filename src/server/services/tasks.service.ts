@@ -1,5 +1,6 @@
 import type { Prisma, Task as PrismaTask } from "@prisma/client";
 import { getPrismaClient } from "../db";
+import { getDefaultUserId } from "./user.service";
 
 export type TaskStatus = "TODO" | "IN PROGRESS" | "DONE";
 export type TaskPriority = "High" | "Medium" | "Low";
@@ -9,10 +10,14 @@ export interface ServerTask {
   id: number;
   title: string;
   subtitle: string;
+  category: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   estimate: string;
   done: boolean;
+  scheduleAt: string;
+  completedAt: string | null;
+  dueTime: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,19 +42,25 @@ export interface TaskListResult {
 export interface TaskCreateInput {
   title: string;
   subtitle?: string;
+  category?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
   estimate?: string;
   done?: boolean;
+  scheduleAt?: string;
+  dueTime?: string;
 }
 
 export interface TaskUpdateInput {
   title?: string;
   subtitle?: string;
+  category?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
   estimate?: string;
   done?: boolean;
+  scheduleAt?: string;
+  dueTime?: string;
 }
 
 export interface TaskSummary {
@@ -62,10 +73,14 @@ const serializeTask = (task: PrismaTask): ServerTask => ({
   id: task.id,
   title: task.title,
   subtitle: task.subtitle ?? "",
+  category: task.category,
   status: task.status as TaskStatus,
   priority: task.priority as TaskPriority,
   estimate: task.estimate ?? "",
   done: task.done,
+  scheduleAt: task.scheduleAt.toISOString(),
+  completedAt: task.completedAt?.toISOString() ?? null,
+  dueTime: task.dueTime?.toISOString() ?? null,
   createdAt: task.createdAt.toISOString(),
   updatedAt: task.updatedAt.toISOString(),
 });
@@ -99,9 +114,13 @@ const buildRangeWhere = (range?: TaskDateRange): Prisma.TaskWhereInput => {
   return { createdAt: { gte: start, lt: end } };
 };
 
-const buildWhere = (input: TaskListInput): Prisma.TaskWhereInput => {
+const buildWhere = (
+  input: TaskListInput,
+  userId: number,
+): Prisma.TaskWhereInput => {
   const where: Prisma.TaskWhereInput = {
     ...buildRangeWhere(input.range),
+    userId,
   };
 
   if (input.status) {
@@ -125,7 +144,8 @@ const buildWhere = (input: TaskListInput): Prisma.TaskWhereInput => {
 
 export const listTasks = async (input: TaskListInput): Promise<TaskListResult> => {
   const prisma = getPrismaClient();
-  const where = buildWhere(input);
+  const userId = await getDefaultUserId();
+  const where = buildWhere(input, userId);
   const skip = (input.page - 1) * input.pageSize;
 
   const [total, rows] = await Promise.all([
@@ -151,17 +171,23 @@ export const listTasks = async (input: TaskListInput): Promise<TaskListResult> =
 
 export const createTask = async (input: TaskCreateInput): Promise<ServerTask> => {
   const prisma = getPrismaClient();
+  const userId = await getDefaultUserId();
   const status = input.status ?? "TODO";
   const done = input.done ?? status === "DONE";
-
+  console.log("Creating task with input:", input, "Computed status:", status, "done:", done);
   const created = await prisma.task.create({
     data: {
       title: input.title,
       subtitle: input.subtitle ?? "",
+      category: input.category,
       status,
       priority: input.priority ?? "Medium",
       estimate: input.estimate ?? "",
       done,
+      scheduleAt: input.scheduleAt ? new Date(input.scheduleAt) : new Date(),
+      dueTime: input.dueTime ? new Date(input.dueTime) : null,
+      completedAt: done ? new Date() : null,
+      userId,
     },
   });
 
@@ -173,7 +199,8 @@ export const updateTask = async (
   patch: TaskUpdateInput,
 ): Promise<ServerTask | null> => {
   const prisma = getPrismaClient();
-  const existing = await prisma.task.findUnique({ where: { id } });
+  const userId = await getDefaultUserId();
+  const existing = await prisma.task.findFirst({ where: { id, userId } });
 
   if (!existing) {
     return null;
@@ -187,6 +214,10 @@ export const updateTask = async (
 
   if (patch.subtitle !== undefined) {
     data.subtitle = patch.subtitle;
+  }
+
+  if (patch.category !== undefined) {
+    data.category = patch.category;
   }
 
   if (patch.status !== undefined) {
@@ -204,8 +235,24 @@ export const updateTask = async (
     data.estimate = patch.estimate;
   }
 
+  if (patch.scheduleAt !== undefined) {
+    data.scheduleAt = patch.scheduleAt ? new Date(patch.scheduleAt) : new Date();
+  }
+
+  if (patch.dueTime !== undefined) {
+    data.dueTime = patch.dueTime ? new Date(patch.dueTime) : null;
+  }
+
+  let finalDone = existing.done;
   if (patch.done !== undefined) {
     data.done = patch.done;
+    finalDone = patch.done;
+  } else if (data.done !== undefined) {
+    finalDone = data.done as boolean;
+  }
+
+  if (finalDone !== existing.done) {
+    data.completedAt = finalDone ? new Date() : null;
   }
 
   const updated = await prisma.task.update({ where: { id }, data });
@@ -214,7 +261,8 @@ export const updateTask = async (
 
 export const deleteTask = async (id: number): Promise<boolean> => {
   const prisma = getPrismaClient();
-  const existing = await prisma.task.findUnique({ where: { id } });
+  const userId = await getDefaultUserId();
+  const existing = await prisma.task.findFirst({ where: { id, userId } });
 
   if (!existing) {
     return false;
@@ -228,7 +276,8 @@ export const getTaskSummary = async (
   range?: TaskDateRange,
 ): Promise<TaskSummary> => {
   const prisma = getPrismaClient();
-  const baseWhere = buildRangeWhere(range);
+  const userId = await getDefaultUserId();
+  const baseWhere = { ...buildRangeWhere(range), userId };
   const [total, completed] = await Promise.all([
     prisma.task.count({ where: baseWhere }),
     prisma.task.count({ where: { ...baseWhere, done: true } }),
