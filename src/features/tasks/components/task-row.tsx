@@ -1,19 +1,28 @@
-import { CheckSquare, Square } from "lucide-react";
+import { CheckSquare, ChevronDown, Square } from "lucide-react";
 import { TaskStatusBadge } from "./task-status-badge";
 import { TaskPriorityCell } from "./task-priority-cell";
 import { TaskActionsMenu } from "./task-actions-menu";
-import type { Task } from "../types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { Task, TaskStatus } from "../types";
 
 interface Props {
   task: Task;
   onToggle: (id: number) => void;
+  onStatusChange: (task: Task, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: number) => void;
 }
 
 const GRID = "40px 180px 1fr 130px 130px 80px";
+const STATUS_OPTIONS: TaskStatus[] = ["TODO", "IN PROGRESS", "DONE"];
 
-export function TaskRow({ task, onToggle, onEdit, onDelete }: Props) {
+export function TaskRow({ task, onToggle, onStatusChange, onEdit, onDelete }: Props) {
   const { done } = task;
 
   return (
@@ -47,7 +56,42 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: Props) {
       </button>
 
       {/* Status */}
-      <TaskStatusBadge status={task.status} />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-[#201f22]"
+            aria-label="Change status"
+          >
+            <TaskStatusBadge status={task.status} />
+            <ChevronDown className="w-3 h-3 text-[#5c5b61]" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className="border-0 rounded-xl p-1 min-w-[160px]"
+          style={{
+            background: "#2a2a2c",
+            boxShadow:
+              "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)",
+          }}
+        >
+          <DropdownMenuRadioGroup
+            value={task.status}
+            onValueChange={(value) => onStatusChange(task, value as TaskStatus)}
+          >
+            {STATUS_OPTIONS.map((status) => (
+              <DropdownMenuRadioItem
+                key={status}
+                value={status}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-[0.8125rem] text-[#e4e4e6] cursor-pointer hover:bg-[#353437] focus:bg-[#353437]"
+              >
+                <TaskStatusBadge status={status} />
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Title + subtitle */}
       <div>

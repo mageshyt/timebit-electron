@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TaskRow } from "./task-row";
-import type { Task } from "../types";
+import type { Task, TaskStatus } from "../types";
 
 const COLUMNS = ["", "STATUS", "TITLE", "PRIORITY", "ESTIMATE", "ACTIONS"];
 const GRID = "40px 180px 1fr 130px 130px 80px";
@@ -12,6 +12,7 @@ interface Props {
   pageSize: number;
   onPageChange: (page: number) => void;
   onToggle: (id: number) => void;
+  onStatusChange: (task: Task, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: number) => void;
 }
@@ -23,6 +24,7 @@ export function TaskTable({
   pageSize,
   onPageChange,
   onToggle,
+  onStatusChange,
   onEdit,
   onDelete,
 }: Props) {
@@ -57,6 +59,7 @@ export function TaskTable({
             key={task.id}
             task={task}
             onToggle={onToggle}
+            onStatusChange={onStatusChange}
             onEdit={onEdit}
             onDelete={onDelete}
           />

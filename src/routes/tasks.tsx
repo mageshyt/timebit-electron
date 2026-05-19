@@ -5,6 +5,7 @@ import { TaskFilterTabs } from "@/features/tasks/components/task-filter-tabs";
 import { TaskDialogManager } from "@/features/tasks/components/task-dialog-manager";
 import { useTaskActions, PAGE_SIZE } from "@/features/tasks/task.hooks";
 import { useTaskStore } from "@/features/tasks/task.store";
+import type { Task, TaskStatus } from "@/features/tasks/types";
 
 const TABLE_GRID = "40px 180px 1fr 130px 130px 80px";
 
@@ -81,92 +82,107 @@ function TasksPage() {
 
   const { page, setPage, openAdd, openEdit, activeFilter, setActiveFilter } = useTaskStore();
 
+  const handleStatusChange = (task: Task, status: TaskStatus) => {
+    if (task.status === status) return;
+
+    updateTask(task.id, {
+      title: task.title,
+      subtitle: task.subtitle,
+      status,
+      priority: task.priority,
+      estimate: task.estimate,
+    });
+  };
+
   return (
-    <div className="flex h-full w-full flex-col p-6 pb-8 overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1
-            className="text-[2rem] font-bold tracking-[-0.03em]"
-            style={{ color: "#f4f4f5" }}
-          >
-            Tasks
-          </h1>
-          <p className="flex items-center gap-2 mt-1 text-[0.8125rem] text-[#8e8d92]">
-            <span
-              className="w-2 h-2 rounded-full bg-[#c0c1ff] inline-block"
-              style={{ boxShadow: "0 0 6px rgba(192,193,255,0.6)" }}
-            />
-            You have{" "}
-            <span className="text-[#e4e4e6] font-medium">{remaining}</span>{" "}
-            tasks remaining for today.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 mt-1">
-          <TaskFilterTabs active={activeFilter} onChange={setActiveFilter} />
-
-          <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] hover:text-[#e4e4e6] transition-colors"
-            style={{ background: "#1c1b1d" }}
-          >
-            <Filter className="w-3.5 h-3.5" />
-            Filter
-          </button>
-
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#131315] bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] hover:opacity-90 transition-opacity drop-shadow-[0_4px_24px_rgba(192,193,255,0.2)]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New Task
-          </button>
-        </div>
-      </div>
-
-      {/* Status banners */}
-      {errorMessage ? (
-        <div className="mb-4 rounded-lg border border-[#3a2a2a] bg-[#1c1b1d] px-4 py-3 text-[0.75rem] text-[#ffb4b4]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="font-semibold text-[#ffd1d1]">Unable to load tasks</div>
-              <div className="text-[#ffb4b4]">
-                {errorMessage} — check that the sync server is running and try again.
-              </div>
-            </div>
-            <button
-              onClick={refresh}
-              className="rounded-md bg-[#2a2a2c] px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#f4f4f5] hover:bg-[#353437]"
+    <div className="flex h-full w-full flex-col overflow-y-auto p-6 pb-8">
+      <div className="w-full flex w-full flex-col">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1
+              className="text-[2rem] font-bold tracking-[-0.03em]"
+              style={{ color: "#f4f4f5" }}
             >
-              Retry
+              Tasks
+            </h1>
+            <p className="flex items-center gap-2 mt-1 text-[0.8125rem] text-[#8e8d92]">
+              <span
+                className="w-2 h-2 rounded-full bg-[#c0c1ff] inline-block"
+                style={{ boxShadow: "0 0 6px rgba(192,193,255,0.6)" }}
+              />
+              You have{" "}
+              <span className="text-[#e4e4e6] font-medium">{remaining}</span>{" "}
+              tasks remaining for today.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 mt-1">
+            <TaskFilterTabs active={activeFilter} onChange={setActiveFilter} />
+
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] hover:text-[#e4e4e6] transition-colors"
+              style={{ background: "#1c1b1d" }}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              Filter
+            </button>
+
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 px-5 py-2 rounded-lg text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#131315] bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] hover:opacity-90 transition-opacity drop-shadow-[0_4px_24px_rgba(192,193,255,0.2)]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New Task
             </button>
           </div>
         </div>
-      ) : null}
-      {isFetching && !isLoading ? (
-        <div className="mb-3 rounded-lg bg-[#1c1b1d] px-4 py-3 text-[0.75rem] text-[#8e8d92]">
-          Updating tasks…
-        </div>
-      ) : null}
 
-      {/* Table */}
-      {isLoading ? (
-        <TaskTableSkeleton />
-      ) : (
-        <TaskTable
-          tasks={tasks}
-          total={total}
-          page={page}
-          pageSize={PAGE_SIZE}
-          onPageChange={(p) => setPage(p, totalPages)}
-          onToggle={toggleTask}
-          onEdit={openEdit}
-          onDelete={deleteTask}
-        />
-      )}
+        {/* Status banners */}
+        {errorMessage ? (
+          <div className="mb-4 rounded-lg border border-[#3a2a2a] bg-[#1c1b1d] px-4 py-3 text-[0.75rem] text-[#ffb4b4]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold text-[#ffd1d1]">Unable to load tasks</div>
+                <div className="text-[#ffb4b4]">
+                  {errorMessage} — check that the sync server is running and try again.
+                </div>
+              </div>
+              <button
+                onClick={refresh}
+                className="rounded-md bg-[#2a2a2c] px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#f4f4f5] hover:bg-[#353437]"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {isFetching && !isLoading ? (
+          <div className="mb-3 rounded-lg bg-[#1c1b1d] px-4 py-3 text-[0.75rem] text-[#8e8d92]">
+            Updating tasks…
+          </div>
+        ) : null}
 
-      {/* Dialogs — self-managed via Zustand store */}
-      <TaskDialogManager onAdd={createTask} onEdit={updateTask} />
+        {/* Table */}
+        {isLoading ? (
+          <TaskTableSkeleton />
+        ) : (
+          <TaskTable
+            tasks={tasks}
+            total={total}
+            page={page}
+            pageSize={PAGE_SIZE}
+            onPageChange={(p) => setPage(p, totalPages)}
+            onToggle={toggleTask}
+            onStatusChange={handleStatusChange}
+            onEdit={openEdit}
+            onDelete={deleteTask}
+          />
+        )}
+
+        {/* Dialogs — self-managed via Zustand store */}
+        <TaskDialogManager onAdd={createTask} onEdit={updateTask} />
+      </div>
     </div>
   );
 }
