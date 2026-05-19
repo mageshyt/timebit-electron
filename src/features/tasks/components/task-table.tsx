@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TaskRow } from "./task-row";
 import type { Task, TaskStatus } from "../types";
 
-const COLUMNS = ["", "STATUS", "TITLE", "PRIORITY", "ESTIMATE", "ACTIONS"];
-const GRID = "40px 180px 1fr 130px 130px 80px";
+const COLUMNS = ["", "STATUS", "TITLE", "CATEGORY", "PRIORITY", "ESTIMATE", "ACTIONS"];
+const GRID = "40px 140px 1fr 160px 130px 120px 80px";
 
 interface Props {
   tasks: Task[];

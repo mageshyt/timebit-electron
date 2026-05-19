@@ -64,10 +64,13 @@ export function useTaskActions() {
         body: JSON.stringify({
           title: form.title,
           subtitle: form.subtitle,
+          category: form.category,
           status: form.status,
           priority: form.priority,
           estimate: form.estimate,
           done: form.status === "DONE",
+          scheduleAt: form.scheduleAt,
+          dueTime: form.dueTime,
         }),
       }),
     onSuccess: () => {
@@ -84,10 +87,13 @@ export function useTaskActions() {
         body: JSON.stringify({
           title: form.title,
           subtitle: form.subtitle,
+          category: form.category,
           status: form.status,
           priority: form.priority,
           estimate: form.estimate,
           done: form.status === "DONE",
+          scheduleAt: form.scheduleAt,
+          dueTime: form.dueTime,
         }),
       }),
     onSuccess: () => invalidateTasks(),

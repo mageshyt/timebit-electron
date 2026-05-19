@@ -12,12 +12,14 @@ export function TaskDialogManager({ onAdd, onEdit }: Props) {
   const { addOpen, closeAdd, editTarget, closeEdit } = useTaskStore();
 
   const handleAdd = (form: TaskForm) => {
+    console.log(form);
     onAdd(form);
     closeAdd();
   };
 
   const handleEdit = (form: TaskForm) => {
     if (!editTarget) return;
+    console.log(form);
     onEdit(editTarget.id, form);
     closeEdit();
   };
@@ -39,6 +41,7 @@ export function TaskDialogManager({ onAdd, onEdit }: Props) {
             ? {
                 title: editTarget.title,
                 subtitle: editTarget.subtitle,
+                category: editTarget.category ?? undefined,
                 status: editTarget.status,
                 priority: editTarget.priority,
                 estimate: editTarget.estimate,

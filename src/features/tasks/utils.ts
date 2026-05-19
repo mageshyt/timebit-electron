@@ -4,10 +4,14 @@ export const normalizeTask = (task: TaskResponse): Task => ({
   id: task.id,
   title: task.title,
   subtitle: task.subtitle,
+  category: task.category,
   status: task.status,
   priority: task.priority,
   estimate: task.estimate,
   done: task.done,
+  scheduleAt: task.scheduleAt,
+  completedAt: task.completedAt,
+  dueTime: task.dueTime,
 });
 
 export const fetchJson = async <T,>(input: RequestInfo, init?: RequestInit): Promise<T> => {

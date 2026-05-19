@@ -128,17 +128,41 @@ export function TaskDialog({ open, title, initial, onClose, onSave }: Props) {
             </div>
           </div>
 
-          {/* Estimate */}
-          <div>
-            <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] mb-1.5 block">
-              Time Estimate
-            </label>
-            <Input
-              value={form.estimate}
-              onChange={(e) => field("estimate", e.target.value)}
-              placeholder="e.g. 1h 30m"
-              className="border-0 bg-[#201f22] text-[#e4e4e6] placeholder:text-[#636268] focus-visible:ring-[#c0c1ff]/30 focus-visible:ring-1"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Category */}
+            <div>
+              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] mb-1.5 block">
+                Category
+              </label>
+              <Select
+                value={form.category}
+                onValueChange={(v) => field("category", v)}
+              >
+                <SelectTrigger className="w-full h-9 border-0 bg-[#201f22] text-[#e4e4e6] text-[0.8125rem] focus:ring-1 focus:ring-[#c0c1ff]/30 focus-visible:ring-[#c0c1ff]/30">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="border-0 rounded-xl" style={{ background: "#2a2a2c", boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)" }}>
+                  <SelectItem value="Work" className="text-[0.8125rem] text-[#e4e4e6] focus:bg-[#353437] focus:text-[#f4f4f5] rounded-lg">Work</SelectItem>
+                  <SelectItem value="Personal" className="text-[0.8125rem] text-[#e4e4e6] focus:bg-[#353437] focus:text-[#f4f4f5] rounded-lg">Personal</SelectItem>
+                  <SelectItem value="Study" className="text-[0.8125rem] text-[#e4e4e6] focus:bg-[#353437] focus:text-[#f4f4f5] rounded-lg">Study</SelectItem>
+                  <SelectItem value="Fitness" className="text-[0.8125rem] text-[#e4e4e6] focus:bg-[#353437] focus:text-[#f4f4f5] rounded-lg">Fitness</SelectItem>
+                  <SelectItem value="Errands" className="text-[0.8125rem] text-[#e4e4e6] focus:bg-[#353437] focus:text-[#f4f4f5] rounded-lg">Errands</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Estimate */}
+            <div>
+              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] mb-1.5 block">
+                Time Estimate
+              </label>
+              <Input
+                value={form.estimate}
+                onChange={(e) => field("estimate", e.target.value)}
+                placeholder="e.g. 1h 30m"
+                className="w-full h-9 border-0 bg-[#201f22] text-[#e4e4e6] placeholder:text-[#636268] focus-visible:ring-[#c0c1ff]/30 focus-visible:ring-1 text-[0.8125rem]"
+              />
+            </div>
           </div>
         </div>
 

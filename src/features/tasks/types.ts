@@ -7,17 +7,24 @@ export interface Task {
   status: TaskStatus;
   title: string;
   subtitle: string;
+  category: string | null;
   priority: TaskPriority;
   estimate: string;
   done: boolean;
+  scheduleAt: string;
+  completedAt: string | null;
+  dueTime: string | null;
 }
 
 export interface TaskForm {
   title: string;
   subtitle: string;
+  category?: string;
   status: TaskStatus;
   priority: TaskPriority;
   estimate: string;
+  scheduleAt?: string;
+  dueTime?: string;
 }
 
 export type TaskResponse = Task & {

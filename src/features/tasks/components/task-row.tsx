@@ -19,7 +19,7 @@ interface Props {
   onDelete: (id: number) => void;
 }
 
-const GRID = "40px 180px 1fr 130px 130px 80px";
+const GRID = "40px 140px 1fr 160px 130px 120px 80px";
 const STATUS_OPTIONS: TaskStatus[] = ["TODO", "IN PROGRESS", "DONE"];
 
 export function TaskRow({ task, onToggle, onStatusChange, onEdit, onDelete }: Props) {
@@ -104,10 +104,27 @@ export function TaskRow({ task, onToggle, onStatusChange, onEdit, onDelete }: Pr
         >
           {task.title}
         </div>
-        <div className="text-[0.75rem] text-[#5c5b61] mt-0.5">
-          {task.subtitle}
+        <div className="flex flex-wrap items-center gap-2 mt-1">
+          {task.subtitle && (
+            <span className="text-[0.75rem] text-[#5c5b61]">
+              {task.subtitle}
+            </span>
+          )}
+          {task.scheduleAt && (
+            <span className="text-[0.6875rem] text-[#8083ff] bg-[#8083ff]/10 px-1.5 py-0.5 rounded-sm flex items-center">
+              Scheduled: {new Date(task.scheduleAt).toLocaleDateString()}
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Category */}
+      <span
+        className="text-[0.75rem] font-medium uppercase tracking-[0.05em]"
+        style={{ color: done ? "#5c5b61" : "#a0a0a8" }}
+      >
+        {task.category || "-"}
+      </span>
 
       {/* Priority */}
       <TaskPriorityCell priority={task.priority} />
