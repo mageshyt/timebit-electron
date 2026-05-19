@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +28,18 @@ interface Props {
 export function TaskDialog({ open, title, initial, onClose, onSave }: Props) {
   const [form, setForm] = useState<TaskForm>(initial);
 
+  useEffect(() => {
+    if (open) {
+      setForm(initial);
+    }
+  }, [initial, open]);
+
   const handleOpenChange = (o: boolean) => {
-    if (o) setForm(initial);
-    else onClose();
+    if (o) {
+      setForm(initial);
+      return;
+    }
+    onClose();
   };
 
   const field = (key: keyof TaskForm, value: string) =>
