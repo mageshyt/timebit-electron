@@ -8,8 +8,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Timer,
+  Terminal,
 } from "lucide-react";
 import { useState } from "react";
+import { inDevelopment } from "@/constants";
 
 interface NavItem {
   id: string;
@@ -24,6 +26,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: "habits", label: "Habits", path: "/habits", icon: Repeat2 },
   { id: "analytics", label: "Analytics", path: "/analytics", icon: BarChart2 },
   { id: "settings", label: "Settings", path: "/settings", icon: Settings },
+  ...(inDevelopment
+    ? [{ id: "ws-lab", label: "WS Lab", path: "/ws-lab", icon: Terminal }]
+    : []),
 ];
 
 export default function AppSidebar() {
@@ -99,6 +104,7 @@ export default function AppSidebar() {
 
               <Icon
                 className="relative z-10 flex-shrink-0 transition-colors duration-150"
+                // @ts-ignore
                 style={{
                   width: "16px",
                   height: "16px",

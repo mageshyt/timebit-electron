@@ -10,7 +10,8 @@ export type WsEventType =
   | "task:deleted"
   | "habit:updated"
   | "sync:request"
-  | "sync:state";
+  | "sync:state"
+  | "test:event";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;
@@ -29,4 +30,8 @@ export interface Esp32StatusPayload {
 
 export interface TaskEventPayload {
   id: number | string;
+}
+
+export interface TestPayload {
+  message: string;
 }
