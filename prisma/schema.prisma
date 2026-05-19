@@ -12,12 +12,160 @@ model Task {
     status    String
     title     String
     subtitle  String?
+    category  String?
     priority  String
     estimate  String?
     done      Boolean  @default(false)
+    scheduleAt DateTime @default(now())
+    completedAt DateTime?
+    dueTime   DateTime?
+    userId    Int?
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    user      UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+    sessions  PomodoroSession[]
+
     @@index([status])
     @@index([priority])
+    @@index([userId])
+}
+
+model UserProfile {
+    id                     Int      @id @default(autoincrement())
+    name                   String
+    avatar                 String?
+    timezone               String?
+    dailyGoalTasks         Int      @default(0)
+    dailyGoalHabits        Int      @default(0)
+    pomodoroWorkMins        Int      @default(25)
+    pomodoroBreakMins       Int      @default(5)
+    pomodoroLongBreakMins   Int      @default(15)
+    syncServerUrl           String?
+    wakeTime               String?
+    sleepTime              String?
+    createdAt              DateTime @default(now())
+
+    tasks                  Task[]
+    habits                 Habit[]
+    events                 Event[]
+    pomodoroSessions       PomodoroSession[]
+    dayProgresses          DayProgress[]
+    wellnessLogs           WellnessLog[]
+    habitSummaries         HabitSummary[]
+}
+
+model Habit {
+    id             Int      @id @default(autoincrement())
+    title          String
+    category       String?
+    resetFrequency String?
+    userId         Int?
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    user           UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+    logs           HabitLog[]
+    summary        HabitSummary?
+
+    @@index([userId])
+}
+
+model HabitLog {
+    id        Int      @id @default(autoincrement())
+    habitId   Int
+    date      DateTime
+    completed Boolean  @default(false)
+    loggedAt  DateTime @default(now())
+
+    habit     Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+    @@index([habitId])
+    @@index([date])
+}
+
+model Event {
+    id                Int      @id @default(autoincrement())
+    title             String
+    time              DateTime
+    notifyBeforeMins  Int?
+    userId            Int?
+    createdAt         DateTime @default(now())
+
+    user              UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+    @@index([userId])
+    @@index([time])
+}
+
+model PomodoroSession {
+    id           Int      @id @default(autoincrement())
+    taskId       Int?
+    userId       Int?
+    type         String
+    category     String?
+    durationMins Int
+    status       String
+    startedAt    DateTime
+    endedAt      DateTime?
+
+    task         Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+    user         UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+    @@index([taskId])
+    @@index([userId])
+}
+
+model DayProgress {
+    id              Int      @id @default(autoincrement())
+    userId          Int?
+    date            DateTime
+    tasksCompleted  Int      @default(0)
+    tasksTotal      Int      @default(0)
+    habitsCompleted Int      @default(0)
+    habitsTotal     Int      @default(0)
+    pomodorosDone   Int      @default(0)
+
+    user            UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+    reflection      Reflection?
+
+    @@index([userId])
+    @@index([date])
+}
+
+model Reflection {
+    id            Int      @id @default(autoincrement())
+    date          DateTime
+    mood          Int
+    notes         String?
+    dayProgressId Int?     @unique
+
+    dayProgress   DayProgress? @relation(fields: [dayProgressId], references: [id], onDelete: SetNull)
+
+    @@index([date])
+}
+
+model WellnessLog {
+    id       Int      @id @default(autoincrement())
+    userId   Int?
+    type     String
+    loggedAt DateTime @default(now())
+
+    user     UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+    @@index([userId])
+    @@index([loggedAt])
+}
+
+model HabitSummary {
+    id            Int      @id @default(autoincrement())
+    habitId       Int      @unique
+    userId        Int?
+    currentStreak Int      @default(0)
+    longestStreak Int      @default(0)
+
+    habit         Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+    user          UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+    @@index([userId])
 }
