@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { LOCAL_STORAGE_KEYS } from "@/constants";
+import { inDevelopment, LOCAL_STORAGE_KEYS } from "@/constants";
 
 const DEFAULT_SYNC_SERVER_URL = "http://magesh.local:5719";
 
@@ -8,6 +8,8 @@ const resolveSyncServerUrl = () => {
 
   return DEFAULT_SYNC_SERVER_URL;
 };
+
+export const getSyncServerUrl = () => resolveSyncServerUrl();
 
 type Esp32StatusPayload = {
   connected?: boolean;
@@ -130,6 +132,9 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       socket.addEventListener("message", (event) => {
         try {
           const data = JSON.parse(event.data) as SyncEvent;
+          if (inDevelopment) {
+            console.info("[ws] event", data);
+          }
           if (data.type === "esp32:status") {
             const esp = parseEsp32Status(data.payload);
             if (!esp) {
