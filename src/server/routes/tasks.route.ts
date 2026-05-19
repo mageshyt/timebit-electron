@@ -61,6 +61,8 @@ export async function listTasksRoute(
     query,
   });
 
+  console.log(result)
+
   sendJson(res, 200, {
     data: result.data,
     meta: {
@@ -97,10 +99,13 @@ export async function createTaskRoute(
   const task = await createTask({
     title: body.title.trim(),
     subtitle: body.subtitle ?? "",
+    category: body.category,
     status: body.status,
     priority: body.priority,
     estimate: body.estimate ?? "",
     done: body.done,
+    scheduleAt: body.scheduleAt,
+    dueTime: body.dueTime,
   });
 
   broadcaster.broadcast({ type: "task:created", payload: task });
@@ -133,10 +138,13 @@ export async function updateTaskRoute(
   const updated = await updateTask(id, {
     title: body.title?.trim(),
     subtitle: body.subtitle,
+    category: body.category,
     status: body.status,
     priority: body.priority,
     estimate: body.estimate,
     done: body.done,
+    scheduleAt: body.scheduleAt,
+    dueTime: body.dueTime,
   });
   if (!updated) {
     sendJson(res, 404, { error: "Task not found" });
