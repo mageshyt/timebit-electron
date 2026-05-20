@@ -7,6 +7,15 @@ import {
   updateTaskRoute,
   deleteTaskRoute,
 } from "./routes/tasks.route";
+import {
+  listHabitsRoute,
+  completeHabitRoute,
+  resetHabitStreaksRoute,
+} from "./routes/habits.route";
+import {
+  getTodayWaterIntakeRoute,
+  logWaterIntakeRoute,
+} from "./routes/wellness.route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,9 +88,15 @@ export function createRouter(): http.RequestListener {
       return;
     }
 
-    // POST /tasks
-    if (method === "POST" && pathname === "/tasks") {
-      void createTaskRoute(req, res);
+    // GET /habits
+    if (method === "GET" && pathname === "/habits") {
+      void listHabitsRoute(req, res);
+      return;
+    }
+
+    // POST /habits/reset
+    if (method === "POST" && pathname === "/habits/reset") {
+      void resetHabitStreaksRoute(req, res);
       return;
     }
 
@@ -93,11 +108,39 @@ export function createRouter(): http.RequestListener {
       return;
     }
 
+    // POST /habits/:id/complete
+    if (method === "POST" && pathname.startsWith("/habits/")) {
+      if (pathname.endsWith("/complete")) {
+        const id = extractId(pathname.replace("/complete", ""), "/habits/");
+        if (id === null) { sendJson(res, 400, { error: "Invalid id" }); return; }
+        void completeHabitRoute(req, res, id);
+        return;
+      }
+    }
+
     // DELETE /tasks/:id
     if (method === "DELETE" && pathname.startsWith("/tasks/")) {
       const id = extractId(pathname, "/tasks/");
       if (id === null) { sendJson(res, 400, { error: "Invalid id" }); return; }
       void deleteTaskRoute(req, res, id);
+      return;
+    }
+
+    // POST /tasks
+    if (method === "POST" && pathname === "/tasks") {
+      void createTaskRoute(req, res);
+      return;
+    }
+
+    // GET /wellness/water/today
+    if (method === "GET" && pathname === "/wellness/water/today") {
+      void getTodayWaterIntakeRoute(req, res);
+      return;
+    }
+
+    // POST /wellness/water
+    if (method === "POST" && pathname === "/wellness/water") {
+      void logWaterIntakeRoute(req, res);
       return;
     }
 
