@@ -6,6 +6,7 @@ import {
   ScheduleSettingsCard,
   PomodoroSettingsCard,
   SyncSettingsCard,
+  HabitsSettingsCard,
 } from "@/features/settings/components";
 
 function SettingsPage() {
@@ -24,6 +25,12 @@ function SettingsPage() {
           <PomodoroSettingsCard />
           <SyncSettingsCard />
         </div>
+      </div>
+
+      <hr className="my-8 border-white/10" />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <HabitsSettingsCard />
       </div>
     </div>
   );
