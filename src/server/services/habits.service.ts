@@ -8,6 +8,7 @@ export type HabitView = {
   resetFrequency: string;
   streak: number;
   done: boolean;
+  history: string[];
 };
 
 export type HabitSummary = {
@@ -59,34 +60,63 @@ export const listHabits = async (): Promise<HabitListResult> => {
 
   const ids = habits.map((habit) => habit.id);
   const today = startOfDay(new Date());
-  const tomorrow = addDays(today, 1);
+
+  const getStartOfWeek = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  };
+
+  const startOfWeekDate = getStartOfWeek(today);
+  const endOfWeekDate = addDays(startOfWeekDate, 7);
 
   const logs = await prisma.habitLog.findMany({
     where: {
       habitId: { in: ids },
       completed: true,
-      date: { gte: today, lt: tomorrow },
+      date: { gte: startOfWeekDate, lt: endOfWeekDate },
     },
   });
 
-  const completedIds = new Set(logs.map((log) => log.habitId));
+  const logsByHabitAndDate = logs.reduce((acc, log) => {
+    if (!acc[log.habitId]) acc[log.habitId] = new Set();
+    acc[log.habitId].add(startOfDay(log.date).getTime());
+    return acc;
+  }, {} as Record<number, Set<number>>);
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeekDate, i).getTime());
+
   const bestStreak = habits.reduce((max, habit) => {
     const value = habit.summary?.longestStreak ?? 0;
     return Math.max(max, value);
   }, 0);
 
-  return {
-    data: habits.map((habit) => ({
+  const todayTime = today.getTime();
+  let totalCompletedToday = 0;
+
+  const data = habits.map((habit) => {
+    const done = logsByHabitAndDate[habit.id]?.has(todayTime) ?? false;
+    if (done) totalCompletedToday++;
+    return {
       id: habit.id,
       title: habit.title,
       category: habit.category ?? "",
       resetFrequency: habit.resetFrequency ?? "",
       streak: habit.summary?.currentStreak ?? 0,
-      done: completedIds.has(habit.id),
-    })),
+      done,
+      history: weekDays.map(time => {
+        if (time > todayTime) return "empty";
+        return logsByHabitAndDate[habit.id]?.has(time) ? "optimized" : "missed";
+      }),
+    };
+  });
+
+  return {
+    data,
     summary: {
       total: habits.length,
-      completed: completedIds.size,
+      completed: totalCompletedToday,
       bestStreak,
     },
   };
@@ -112,6 +142,7 @@ export const createHabit = async (input: HabitCreateInput): Promise<HabitView> =
     resetFrequency: habit.resetFrequency ?? "",
     streak: 0,
     done: false,
+    history: Array(7).fill("missed"),
   };
 };
 
@@ -184,13 +215,40 @@ export const completeHabit = async (id: number): Promise<HabitView | null> => {
     });
   }
 
+  const getStartOfWeek = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  };
+
+  const startOfWeekDate = getStartOfWeek(today);
+  const endOfWeekDate = addDays(startOfWeekDate, 7);
+
+  const recentLogs = await prisma.habitLog.findMany({
+    where: {
+      habitId: id,
+      completed: true,
+      date: { gte: startOfWeekDate, lt: endOfWeekDate },
+    },
+  });
+  
+  const completedTimes = new Set(recentLogs.map(l => startOfDay(l.date).getTime()));
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeekDate, i).getTime());
+
+  const isDoneToday = completedTimes.has(today.getTime());
+
   return {
     id: habit.id,
     title: habit.title,
     category: habit.category ?? "",
     resetFrequency: habit.resetFrequency ?? "",
     streak: currentStreak,
-    done: true,
+    done: isDoneToday,
+    history: weekDays.map(time => {
+      if (time > today.getTime()) return "empty";
+      return completedTimes.has(time) ? "optimized" : "missed";
+    }),
   };
 };
 
@@ -211,5 +269,14 @@ export const resetHabitStreaks = async (): Promise<void> => {
 
   await prisma.habitLog.deleteMany({
     where: { habitId: { in: habitIds } },
+  });
+};
+
+export const deleteHabit = async (id: number): Promise<void> => {
+  const prisma = getPrismaClient();
+  const userId = await getDefaultUserId();
+
+  await prisma.habit.deleteMany({
+    where: { id, userId },
   });
 };

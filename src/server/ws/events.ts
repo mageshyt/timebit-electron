@@ -9,6 +9,7 @@ export type WsEventType =
   | "task:updated"
   | "task:deleted"
   | "habit:updated"
+  | "wellness:updated"
   | "sync:request"
   | "sync:state"
   | "test:event";
