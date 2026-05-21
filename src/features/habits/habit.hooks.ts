@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSyncServerUrl } from "@/state/sync-status";
-import { fetchHabits, completeHabit, resetHabitStreaks, fetchJson } from "./utils";
+import { fetchHabits, resetHabitStreaks, fetchJson } from "./utils";
 import type { Habit } from "./types";
 import { ipc } from "@/ipc/manager";
 
@@ -39,8 +39,11 @@ export function useHabitActions() {
     onSuccess: () => invalidateHabits(),
   });
 
-  const completeHabitMutation = useMutation({
-    mutationFn: (id: number) => completeHabit(syncServerUrl, id),
+  const toggleHabitMutation = useMutation({
+    mutationFn: (id: number) =>
+      fetchJson<{ data: { id: number; done: boolean } }>(`${syncServerUrl}/habits/${id}/toggle`, {
+        method: "POST",
+      }),
     onSuccess: () => invalidateHabits(),
   });
 
@@ -53,7 +56,8 @@ export function useHabitActions() {
     deleteHabit: (id: number) => deleteHabitMutation.mutate(id),
     updateHabit: (form: { id: number; title: string; category?: string; resetFrequency?: string }) =>
       updateHabitMutation.mutate(form),
-    toggleHabit: (id: number) => completeHabitMutation.mutate(id),
+    toggleHabit: (id: number) => toggleHabitMutation.mutate(id),
+    toggleHabitAsync: (id: number) => toggleHabitMutation.mutateAsync(id),
   };
 }
 

@@ -292,6 +292,43 @@ export const completeHabit = async (id: number): Promise<HabitView | null> => {
   };
 };
 
+/**
+ * Toggle today's completion state for a habit.
+ * If already done → mark incomplete. If incomplete → mark complete (same as completeHabit).
+ * Returns { done: boolean } indicating the NEW state.
+ */
+export const toggleHabitLog = async (id: number): Promise<{ id: number; done: boolean } | null> => {
+  const prisma = getPrismaClient();
+  const userId = await getDefaultUserId();
+
+  const habit = await prisma.habit.findFirst({ where: { id, userId } });
+  if (!habit) return null;
+
+  const today = startOfDay(new Date());
+  const tomorrow = addDays(today, 1);
+
+  const existingLog = await prisma.habitLog.findFirst({
+    where: { habitId: id, date: { gte: today, lt: tomorrow } },
+  });
+
+  let newDone: boolean;
+
+  if (!existingLog) {
+    // No log yet → create as completed
+    await prisma.habitLog.create({ data: { habitId: id, date: today, completed: true } });
+    newDone = true;
+  } else {
+    // Flip existing log
+    newDone = !existingLog.completed;
+    await prisma.habitLog.update({
+      where: { id: existingLog.id },
+      data: { completed: newDone },
+    });
+  }
+
+  return { id, done: newDone };
+};
+
 export const resetHabitStreaks = async (): Promise<void> => {
   const prisma = getPrismaClient();
   const userId = await getDefaultUserId();
