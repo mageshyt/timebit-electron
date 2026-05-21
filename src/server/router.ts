@@ -11,11 +11,18 @@ import {
   listHabitsRoute,
   completeHabitRoute,
   resetHabitStreaksRoute,
+  toggleHabitRoute,
 } from "./routes/habits.route";
 import {
   getTodayWaterIntakeRoute,
   logWaterIntakeRoute,
 } from "./routes/wellness.route";
+import {
+  startSessionRoute,
+  completeSessionRoute,
+  abandonSessionRoute,
+  getTodaySessionsRoute,
+} from "./routes/pomodoro.route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -100,6 +107,14 @@ export function createRouter(): http.RequestListener {
       return;
     }
 
+    // POST /habits/:id/toggle
+    if (method === "POST" && pathname.startsWith("/habits/") && pathname.endsWith("/toggle")) {
+      const id = extractId(pathname.replace("/toggle", ""), "/habits/");
+      if (id === null) { sendJson(res, 400, { error: "Invalid id" }); return; }
+      void toggleHabitRoute(req, res, id);
+      return;
+    }
+
     // PATCH /tasks/:id
     if (method === "PATCH" && pathname.startsWith("/tasks/")) {
       const id = extractId(pathname, "/tasks/");
@@ -141,6 +156,34 @@ export function createRouter(): http.RequestListener {
     // POST /wellness/water
     if (method === "POST" && pathname === "/wellness/water") {
       void logWaterIntakeRoute(req, res);
+      return;
+    }
+
+    // GET /pomodoro/sessions/today
+    if (method === "GET" && pathname === "/pomodoro/sessions/today") {
+      void getTodaySessionsRoute(req, res);
+      return;
+    }
+
+    // POST /pomodoro/sessions
+    if (method === "POST" && pathname === "/pomodoro/sessions") {
+      void startSessionRoute(req, res);
+      return;
+    }
+
+    // PATCH /pomodoro/sessions/:id/complete
+    if (method === "PATCH" && pathname.startsWith("/pomodoro/sessions/") && pathname.endsWith("/complete")) {
+      const id = Number.parseInt(pathname.split("/")[3] ?? "", 10);
+      if (Number.isNaN(id)) { sendJson(res, 400, { error: "Invalid id" }); return; }
+      void completeSessionRoute(req, res, id);
+      return;
+    }
+
+    // PATCH /pomodoro/sessions/:id/abandon
+    if (method === "PATCH" && pathname.startsWith("/pomodoro/sessions/") && pathname.endsWith("/abandon")) {
+      const id = Number.parseInt(pathname.split("/")[3] ?? "", 10);
+      if (Number.isNaN(id)) { sendJson(res, 400, { error: "Invalid id" }); return; }
+      void abandonSessionRoute(req, res, id);
       return;
     }
 
