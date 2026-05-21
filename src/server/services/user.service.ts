@@ -10,10 +10,15 @@ const buildDefaultProfile = () => ({
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   dailyGoalTasks: 6,
   dailyGoalHabits: 4,
-  pomodoroWorkMins: 25,
-  pomodoroBreakMins: 5,
-  pomodoroLongBreakMins: 15,
   syncServerUrl: DEFAULT_SYNC_SERVER_URL,
+  deviceWifiSsid: "",
+  deviceWifiPassword: "",
+  focusDurationMins: 25,
+  focusShortBreakMins: 5,
+  focusLongBreakMins: 15,
+  wellnessStandupEnabled: true,
+  wellnessHydrationEnabled: true,
+  wellnessEyeStrainEnabled: true,
   wakeTime: "07:00",
   sleepTime: "23:00",
 });
@@ -24,10 +29,15 @@ export type UserProfileUpdateInput = {
   timezone?: string;
   dailyGoalTasks?: number;
   dailyGoalHabits?: number;
-  pomodoroWorkMins?: number;
-  pomodoroBreakMins?: number;
-  pomodoroLongBreakMins?: number;
   syncServerUrl?: string;
+  deviceWifiSsid?: string;
+  deviceWifiPassword?: string;
+  focusDurationMins?: number;
+  focusShortBreakMins?: number;
+  focusLongBreakMins?: number;
+  wellnessStandupEnabled?: boolean;
+  wellnessHydrationEnabled?: boolean;
+  wellnessEyeStrainEnabled?: boolean;
   wakeTime?: string;
   sleepTime?: string;
 };

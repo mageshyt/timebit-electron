@@ -19,12 +19,12 @@ const normalizeProfile = (profile: Awaited<ReturnType<typeof getDefaultUserProfi
   timezone: profile.timezone ?? "UTC",
   dailyGoalTasks: profile.dailyGoalTasks,
   dailyGoalHabits: profile.dailyGoalHabits,
-  pomodoroWorkMins: profile.pomodoroWorkMins,
-  pomodoroBreakMins: profile.pomodoroBreakMins,
-  pomodoroLongBreakMins: profile.pomodoroLongBreakMins,
   syncServerUrl: profile.syncServerUrl ?? "",
   wakeTime: profile.wakeTime ?? "",
   sleepTime: profile.sleepTime ?? "",
+  wellnessStandupEnabled: profile.wellnessStandupEnabled,
+  wellnessHydrationEnabled: profile.wellnessHydrationEnabled,
+  wellnessEyeStrainEnabled: profile.wellnessEyeStrainEnabled,
 });
 
 export async function getProfileRoute(
@@ -69,21 +69,6 @@ export async function updateProfileRoute(
     if (value !== undefined) update.dailyGoalHabits = Math.max(0, value);
   }
 
-  if ("pomodoroWorkMins" in body) {
-    const value = toNumber(body.pomodoroWorkMins);
-    if (value !== undefined) update.pomodoroWorkMins = Math.max(1, value);
-  }
-
-  if ("pomodoroBreakMins" in body) {
-    const value = toNumber(body.pomodoroBreakMins);
-    if (value !== undefined) update.pomodoroBreakMins = Math.max(1, value);
-  }
-
-  if ("pomodoroLongBreakMins" in body) {
-    const value = toNumber(body.pomodoroLongBreakMins);
-    if (value !== undefined) update.pomodoroLongBreakMins = Math.max(1, value);
-  }
-
   if ("syncServerUrl" in body) {
     update.syncServerUrl = toString(body.syncServerUrl) ?? "";
   }
@@ -94,6 +79,18 @@ export async function updateProfileRoute(
 
   if ("sleepTime" in body) {
     update.sleepTime = toString(body.sleepTime) ?? "";
+  }
+
+  if ("wellnessStandupEnabled" in body) {
+    update.wellnessStandupEnabled = !!body.wellnessStandupEnabled;
+  }
+
+  if ("wellnessHydrationEnabled" in body) {
+    update.wellnessHydrationEnabled = !!body.wellnessHydrationEnabled;
+  }
+
+  if ("wellnessEyeStrainEnabled" in body) {
+    update.wellnessEyeStrainEnabled = !!body.wellnessEyeStrainEnabled;
   }
 
   const profile = await updateDefaultUserProfile(update);

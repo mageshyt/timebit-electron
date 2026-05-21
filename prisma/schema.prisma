@@ -38,10 +38,15 @@ model UserProfile {
     timezone               String?
     dailyGoalTasks         Int      @default(0)
     dailyGoalHabits        Int      @default(0)
-    pomodoroWorkMins        Int      @default(25)
-    pomodoroBreakMins       Int      @default(5)
-    pomodoroLongBreakMins   Int      @default(15)
     syncServerUrl           String?
+    deviceWifiSsid          String?
+    deviceWifiPassword      String?
+    focusDurationMins       Int      @default(25)
+    focusShortBreakMins     Int      @default(5)
+    focusLongBreakMins      Int      @default(15)
+    wellnessStandupEnabled  Boolean  @default(true)
+    wellnessHydrationEnabled Boolean @default(true)
+    wellnessEyeStrainEnabled Boolean @default(true)
     wakeTime               String?
     sleepTime              String?
     createdAt              DateTime @default(now())

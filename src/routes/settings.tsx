@@ -4,8 +4,9 @@ import {
   ProfileSettingsCard,
   GoalsSettingsCard,
   ScheduleSettingsCard,
-  PomodoroSettingsCard,
   SyncSettingsCard,
+  FocusEngineSettingsCard,
+  WellnessAlertsCard,
   HabitsSettingsCard,
 } from "@/features/settings/components";
 
@@ -15,21 +16,23 @@ function SettingsPage() {
       <SettingsHeader />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-6">
-          <ProfileSettingsCard />
-          <GoalsSettingsCard />
-          <ScheduleSettingsCard />
-        </div>
+        <ProfileSettingsCard />
+        <SyncSettingsCard />
+      </div>
 
-        <div className="flex flex-col gap-6">
-          <PomodoroSettingsCard />
-          <SyncSettingsCard />
-        </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <FocusEngineSettingsCard />
+        <WellnessAlertsCard />
       </div>
 
       <hr className="my-8 border-white/10" />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <GoalsSettingsCard />
+        <ScheduleSettingsCard />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <HabitsSettingsCard />
       </div>
     </div>

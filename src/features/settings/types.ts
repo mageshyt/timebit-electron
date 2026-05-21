@@ -7,8 +7,13 @@ export type UserSettings = {
   sleepTime: string;
   dailyGoalTasks: number;
   dailyGoalHabits: number;
-  pomodoroWorkMins: number;
-  pomodoroBreakMins: number;
-  pomodoroLongBreakMins: number;
   syncServerUrl: string;
+  deviceWifiSsid: string;
+  deviceWifiPassword: string;
+  focusDurationMins: number;
+  focusShortBreakMins: number;
+  focusLongBreakMins: number;
+  wellnessStandupEnabled: boolean;
+  wellnessHydrationEnabled: boolean;
+  wellnessEyeStrainEnabled: boolean;
 };
