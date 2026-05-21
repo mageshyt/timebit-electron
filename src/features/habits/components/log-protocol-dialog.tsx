@@ -25,6 +25,9 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
+import { playSuccessChime } from "@/utils/sound";
+import { toast } from "sonner";
+
 export function LogProtocolDialog({
   habits,
   toggleHabit,
@@ -46,6 +49,14 @@ export function LogProtocolDialog({
     if (isPastDate || !selectedHabit || !date) return;
     
     toggleHabit(Number(selectedHabit));
+    playSuccessChime();
+
+    const habitTitle = habits.find(h => h.id === Number(selectedHabit))?.title || "Protocol";
+    toast.success(`${habitTitle} completed! 🎯`, {
+      description: "Keep showing up every day!",
+      duration: 4500,
+    });
+
     setOpen(false);
     setSelectedHabit("");
     setDate(new Date());

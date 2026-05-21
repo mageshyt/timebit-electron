@@ -9,6 +9,8 @@ import { router } from "./utils/routes";
 import "./localization/i18n";
 import QueryProvider from "./provider/query-provider";
 
+import { ToastProvider } from "./provider/toast-provider";
+
 export default function App() {
   const { i18n } = useTranslation();
 
@@ -21,6 +23,7 @@ export default function App() {
     <QueryProvider>
       <SyncStatusProvider>
         <RouterProvider router={router} />
+         <ToastProvider/>
       </SyncStatusProvider>
     </QueryProvider>
   );

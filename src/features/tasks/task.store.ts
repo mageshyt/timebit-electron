@@ -16,7 +16,7 @@ type TaskUIState = {
 };
 
 export const useTaskStore = create<TaskUIState>((set) => ({
-  activeFilter: "Today",
+  activeFilter: "All",
   page: 0,
   addOpen: false,
   editTarget: null,

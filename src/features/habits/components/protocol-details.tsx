@@ -1,10 +1,14 @@
+import React, { useState } from "react";
 import { Droplet, Moon, CheckCircle2 } from "lucide-react";
 import { useWellnessActions } from "../habit.hooks";
+import { toast } from "sonner";
+import { playDropletSound } from "@/utils/sound";
 
 const GLASS_COUNT = 8;
 
 export function WaterIntakeCard() {
   const { waterIntake, isLoading, logWater } = useWellnessActions();
+  const [isThrottled, setIsThrottled] = useState(false);
   const LOGGED_COUNT = Math.min(waterIntake, GLASS_COUNT);
 
   if (isLoading) {
@@ -20,6 +24,22 @@ export function WaterIntakeCard() {
       />
     );
   }
+
+  const handleAddGlass = () => {
+    if (isThrottled) return;
+    setIsThrottled(true);
+    
+    logWater();
+    playDropletSound();
+    toast.success("Glass of water logged! 💧", {
+      description: `Today's total: ${waterIntake + 1} glasses`,
+      duration: 4500,
+    });
+
+    setTimeout(() => {
+      setIsThrottled(false);
+    }, 300);
+  };
 
   const progressPercent = Math.round((waterIntake / GLASS_COUNT) * 100);
 
@@ -99,8 +119,9 @@ export function WaterIntakeCard() {
           {waterIntake} of {GLASS_COUNT} glasses logged
         </span>
         <button 
-          onClick={() => logWater()}
-          className="text-[#c0c1ff] hover:underline"
+          onClick={handleAddGlass}
+          disabled={isThrottled}
+          className="text-[#c0c1ff] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
         >
           + Add Glass
         </button>

@@ -10,6 +10,7 @@ import { ipcContext } from "@/ipc/context";
 import { IPC_CHANNELS, inDevelopment } from "./constants";
 import { startSyncServer } from "./server/sync-server";
 import { connectDatabase, disconnectDatabase } from "./server/db";
+import { ensureDefaultUser } from "./server/services/user.service";
 import { getBasePath } from "./utils/path";
 
 function createWindow() {
@@ -77,6 +78,7 @@ app.whenReady().then(async () => {
     checkForUpdates();
     await setupORPC();
     await connectDatabase();
+    await ensureDefaultUser();
     startSyncServer({ port: 5719 });
   } catch (error) {
     console.error("Error during app initialization:", error);
