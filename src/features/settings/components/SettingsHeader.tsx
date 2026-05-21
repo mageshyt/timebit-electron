@@ -30,7 +30,7 @@ export function SettingsHeader() {
           Settings
         </h1>
         <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
-          Profile and device defaults
+          Configure your workspace and focus preferences.
         </div>
       </div>
       <div className="flex items-center gap-3">
