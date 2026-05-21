@@ -13,6 +13,9 @@ export type WsEventType =
   | "settings:device-sync"
   | "sync:request"
   | "sync:state"
+  | "pomodoro:started"
+  | "pomodoro:completed"
+  | "pomodoro:abandoned"
   | "test:event";
 
 export interface WsEvent<T = unknown> {
