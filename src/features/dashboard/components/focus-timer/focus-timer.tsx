@@ -3,8 +3,13 @@ import { TimerDisplay } from "./timer-display";
 import { SessionStatus } from "./session-status";
 import { TimerControls } from "./timer-controls";
 import { TimerStats } from "./timer-stats";
+import { SessionCategoryPicker } from "../session-category-picker";
+import { useTimerStore } from "../../store/timer.store";
 
 export function FocusTimer() {
+  const activeSessionId = useTimerStore((s) => s.activeSessionId);
+  const taskLabel = useTimerStore((s) => s.taskLabel);
+
   return (
     <div
       className="flex-1 rounded-[1.5rem] relative flex flex-col p-6 overflow-hidden"
@@ -13,17 +18,27 @@ export function FocusTimer() {
         boxShadow: "0 8px 32px rgba(192,193,255,0.03)",
       }}
     >
-      {/* Session ID badge — static */}
+      {/* Session ID badge */}
       <div
         className="absolute top-6 right-6 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] px-2 py-1 rounded"
         style={{ background: "#201f22", color: "#8083ff" }}
       >
-        Session_ID: TB-992-X
+        {activeSessionId !== null ? `Session #${activeSessionId}` : "— No Active Session"}
       </div>
+
+      {/* Task label if linked */}
+      {taskLabel ? (
+        <div
+          className="absolute top-6 left-6 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] px-2 py-1 rounded max-w-[40%] truncate"
+          style={{ background: "#142b1e", color: "#4ade80" }}
+          title={taskLabel}
+        >
+          ▶ {taskLabel}
+        </div>
+      ) : null}
 
       {/* Ring + time display */}
       <div className="flex-1 flex flex-col items-center justify-center relative py-12">
-        {/* SVG ring sized to 288px diameter (radius 140 + stroke 4) */}
         <div className="relative flex items-center justify-center" style={{ width: 288, height: 288 }}>
           <FocusRing />
           <div className="relative flex flex-col items-center gap-4">
@@ -38,6 +53,9 @@ export function FocusTimer() {
           </div>
         </div>
       </div>
+
+      {/* Category picker */}
+      <SessionCategoryPicker />
 
       <TimerControls />
       <TimerStats />
