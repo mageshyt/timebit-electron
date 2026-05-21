@@ -28,6 +28,13 @@ export type HabitCreateInput = {
   resetFrequency?: string;
 };
 
+export type HabitUpdateInput = {
+  id: number;
+  title: string;
+  category?: string;
+  resetFrequency?: string;
+};
+
 const startOfDay = (value: Date): Date =>
   new Date(value.getFullYear(), value.getMonth(), value.getDate());
 
@@ -141,6 +148,39 @@ export const createHabit = async (input: HabitCreateInput): Promise<HabitView> =
     category: habit.category ?? "",
     resetFrequency: habit.resetFrequency ?? "",
     streak: 0,
+    done: false,
+    history: Array(7).fill("missed"),
+  };
+};
+
+export const updateHabit = async (input: HabitUpdateInput): Promise<HabitView | null> => {
+  const prisma = getPrismaClient();
+  const userId = await getDefaultUserId();
+
+  const existing = await prisma.habit.findFirst({
+    where: { id: input.id, userId },
+    include: { summary: true },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const updated = await prisma.habit.update({
+    where: { id: existing.id },
+    data: {
+      title: input.title,
+      category: input.category ?? "",
+      resetFrequency: input.resetFrequency ?? "",
+    },
+  });
+
+  return {
+    id: updated.id,
+    title: updated.title,
+    category: updated.category ?? "",
+    resetFrequency: updated.resetFrequency ?? "",
+    streak: existing.summary?.currentStreak ?? 0,
     done: false,
     history: Array(7).fill("missed"),
   };

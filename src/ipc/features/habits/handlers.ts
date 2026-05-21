@@ -1,5 +1,5 @@
 import { os } from "@orpc/server";
-import { createHabit, deleteHabit } from "@/server/services/habits.service";
+import { createHabit, deleteHabit, updateHabit } from "@/server/services/habits.service";
 import { broadcaster } from "@/server/ws/broadcaster";
 import z from "zod";
 
@@ -23,4 +23,19 @@ export const deleteHabitHandler = os
     await deleteHabit(id);
     broadcaster.broadcast({ type: "habit:updated", payload: { reset: true } });
     return { ok: true };
+  });
+
+export const updateHabitHandler = os
+  .input(
+    z.object({
+      id: z.number(),
+      title: z.string(),
+      category: z.string().optional(),
+      resetFrequency: z.string().optional(),
+    })
+  )
+  .handler(async ({ input }) => {
+    const habit = await updateHabit(input);
+    broadcaster.broadcast({ type: "habit:updated", payload: habit ?? { id: input.id } });
+    return habit;
   });

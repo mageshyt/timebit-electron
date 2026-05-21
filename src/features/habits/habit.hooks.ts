@@ -33,6 +33,12 @@ export function useHabitActions() {
     onSuccess: () => invalidateHabits(),
   });
 
+  const updateHabitMutation = useMutation({
+    mutationFn: (form: { id: number; title: string; category?: string; resetFrequency?: string }) =>
+      ipc.client.habits.updateHabit(form),
+    onSuccess: () => invalidateHabits(),
+  });
+
   const completeHabitMutation = useMutation({
     mutationFn: (id: number) => completeHabit(syncServerUrl, id),
     onSuccess: () => invalidateHabits(),
@@ -42,8 +48,11 @@ export function useHabitActions() {
     habits,
     summary,
     isLoading: listQuery.isLoading,
-    createHabit: (form: { title: string; category?: string }) => createHabitMutation.mutate(form),
+    createHabit: (form: { title: string; category?: string; resetFrequency?: string }) =>
+      createHabitMutation.mutate(form),
     deleteHabit: (id: number) => deleteHabitMutation.mutate(id),
+    updateHabit: (form: { id: number; title: string; category?: string; resetFrequency?: string }) =>
+      updateHabitMutation.mutate(form),
     toggleHabit: (id: number) => completeHabitMutation.mutate(id),
   };
 }
