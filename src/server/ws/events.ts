@@ -10,6 +10,7 @@ export type WsEventType =
   | "task:deleted"
   | "habit:updated"
   | "wellness:updated"
+  | "settings:device-sync"
   | "sync:request"
   | "sync:state"
   | "test:event";
