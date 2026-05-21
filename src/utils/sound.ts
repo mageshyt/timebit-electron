@@ -74,3 +74,71 @@ export function playSuccessChime() {
     console.warn("Failed to play success chime:", err);
   }
 }
+
+/**
+ * Soft, satisfying click for habit toggle (done / undone).
+ * A quick downward pitch sweep — unobtrusive but perceptible.
+ */
+export function playCheckSound(isDone: boolean) {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.type = "sine";
+    if (isDone) {
+      // Completing: quick upward sweep
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(700, now + 0.1);
+    } else {
+      // Undoing: short downward sweep
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+    }
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+    osc.start(now);
+    osc.stop(now + 0.2);
+  } catch (err) {
+    console.warn("Failed to play check sound:", err);
+  }
+}
+
+/**
+ * Deep, focused pulse played when a Pomodoro session starts.
+ * Two low tones that ramp up — signals "entering focus mode".
+ */
+export function playStartSessionSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    const playTone = (freq: number, start: number, dur: number, vol = 0.12) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + start);
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(vol, now + start + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+      osc.start(now + start);
+      osc.stop(now + start + dur);
+    };
+
+    // Two ascending tones: G3 → C4
+    playTone(196, 0, 0.35);
+    playTone(261.63, 0.12, 0.45, 0.14);
+  } catch (err) {
+    console.warn("Failed to play start session sound:", err);
+  }
+}
+
