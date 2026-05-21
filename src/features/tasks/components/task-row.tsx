@@ -1,4 +1,5 @@
-import { CheckSquare, ChevronDown, Square } from "lucide-react";
+import { CheckSquare, ChevronDown, Square, Play } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
 import { TaskStatusBadge } from "./task-status-badge";
 import { TaskPriorityCell } from "./task-priority-cell";
 import { TaskActionsMenu } from "./task-actions-menu";
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Task, TaskStatus } from "../types";
+import { useTimerStore } from "@/features/dashboard/store/timer.store";
 
 interface Props {
   task: Task;
@@ -19,11 +21,18 @@ interface Props {
   onDelete: (id: number) => void;
 }
 
-const GRID = "40px 140px 1fr 160px 130px 120px 80px";
+const GRID = "40px 140px 1fr 160px 130px 120px 40px 80px";
 const STATUS_OPTIONS: TaskStatus[] = ["TODO", "IN PROGRESS", "DONE"];
 
 export function TaskRow({ task, onToggle, onStatusChange, onEdit, onDelete }: Props) {
   const { done } = task;
+  const router = useRouter();
+  const setTask = useTimerStore((s) => s.setTask);
+
+  const handleFocus = () => {
+    setTask(task.id, task.title);
+    void router.navigate({ to: "/" });
+  };
 
   return (
     <div
@@ -136,6 +145,19 @@ export function TaskRow({ task, onToggle, onStatusChange, onEdit, onDelete }: Pr
       >
         {task.estimate}
       </span>
+
+      {/* Focus button */}
+      <button
+        type="button"
+        onClick={handleFocus}
+        disabled={done}
+        className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors disabled:opacity-20 hover:bg-[#c0c1ff]/10"
+        aria-label="Start focus session"
+        title="Focus on this task"
+        style={{ color: "#8083ff" }}
+      >
+        <Play className="w-3.5 h-3.5" fill="currentColor" />
+      </button>
 
       {/* Actions */}
       <TaskActionsMenu task={task} onEdit={onEdit} onDelete={onDelete} />
