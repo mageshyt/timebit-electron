@@ -16,6 +16,7 @@ import {
 import {
   getTodayWaterIntakeRoute,
   logWaterIntakeRoute,
+  logWellnessBreakRoute,
 } from "./routes/wellness.route";
 import {
   startSessionRoute,
@@ -156,6 +157,12 @@ export function createRouter(): http.RequestListener {
     // POST /wellness/water
     if (method === "POST" && pathname === "/wellness/water") {
       void logWaterIntakeRoute(req, res);
+      return;
+    }
+
+    // POST /wellness/log
+    if (method === "POST" && pathname === "/wellness/log") {
+      void logWellnessBreakRoute(req, res);
       return;
     }
 

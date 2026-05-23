@@ -39,3 +39,17 @@ export const getTodayWaterIntake = async (): Promise<number> => {
 
   return count;
 };
+
+export const logWellnessBreak = async (type: string): Promise<void> => {
+  const prisma = getPrismaClient();
+  const userId = await getDefaultUserId();
+
+  await prisma.wellnessLog.create({
+    data: {
+      userId,
+      type,
+      loggedAt: new Date(),
+    },
+  });
+};
+
