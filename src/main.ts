@@ -14,6 +14,8 @@ import { ensureDefaultUser } from "./server/services/user.service";
 import { getBasePath } from "./utils/path";
 import { emitWellnessUpdate } from "./server/engine/wellness-engine";
 
+app.name = "TimeBit";
+
 function createWindow() {
   const basePath = getBasePath();
   const preload = path.join(basePath, "preload.js");

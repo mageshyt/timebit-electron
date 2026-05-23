@@ -1,6 +1,7 @@
 import type http from "node:http";
 import { readBody, sendJson } from "../router";
 import { broadcaster } from "../ws/broadcaster";
+import { showSystemNotification } from "../engine/wellness-engine";
 import {
   logWaterIntake,
   getTodayWaterIntake,
@@ -40,4 +41,40 @@ export async function logWellnessBreakRoute(
   broadcaster.broadcast({ type: "wellness:updated", payload: { type } });
   sendJson(res, 201, { ok: true });
 }
+
+export async function testWellnessNotificationRoute(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
+  const body = await readBody<{ type: unknown }>(req);
+  const { type } = body;
+
+  if (type !== "standup" && type !== "water_intake" && type !== "eye_strain") {
+    sendJson(res, 400, { error: "Invalid type. Must be 'standup', 'water_intake', or 'eye_strain'" });
+    return;
+  }
+
+  if (type === "standup") {
+    showSystemNotification(
+      "Time to stand up and stretch! 🚶‍♂️",
+      "Click to log completion",
+      "standup"
+    );
+  } else if (type === "water_intake") {
+    showSystemNotification(
+      "Time for a glass of water! 💧",
+      "Click to log water intake",
+      "water_intake"
+    );
+  } else if (type === "eye_strain") {
+    showSystemNotification(
+      "Look 20 feet away for 20 seconds! 👀",
+      "Click to log eye break",
+      "eye_strain"
+    );
+  }
+
+  sendJson(res, 200, { ok: true });
+}
+
 
