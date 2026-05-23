@@ -16,6 +16,9 @@ export type WsEventType =
   | "pomodoro:started"
   | "pomodoro:completed"
   | "pomodoro:abandoned"
+  | "wellness:standup"
+  | "wellness:hydration"
+  | "wellness:eye_strain"
   | "test:event";
 
 export interface WsEvent<T = unknown> {
