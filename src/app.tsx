@@ -10,6 +10,7 @@ import "./localization/i18n";
 import QueryProvider from "./provider/query-provider";
 
 import { ToastProvider } from "./provider/toast-provider";
+import { WebSocketEventProvider } from "./provider/websocket-event-provider";
 
 export default function App() {
   const { i18n } = useTranslation();
@@ -22,8 +23,10 @@ export default function App() {
   return (
     <QueryProvider>
       <SyncStatusProvider>
-        <RouterProvider router={router} />
-         <ToastProvider/>
+        <WebSocketEventProvider>
+          <RouterProvider router={router} />
+          <ToastProvider/>
+        </WebSocketEventProvider>
       </SyncStatusProvider>
     </QueryProvider>
   );
