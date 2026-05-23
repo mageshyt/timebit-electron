@@ -9,16 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WsLabRouteImport } from './routes/ws-lab'
+import { Route as TestLabRouteImport } from './routes/test-lab'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as HabitsRouteImport } from './routes/habits'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
-const WsLabRoute = WsLabRouteImport.update({
-  id: '/ws-lab',
-  path: '/ws-lab',
+const TestLabRoute = TestLabRouteImport.update({
+  id: '/test-lab',
+  path: '/test-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasksRoute = TasksRouteImport.update({
@@ -53,7 +53,7 @@ export interface FileRoutesByFullPath {
   '/habits': typeof HabitsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
-  '/ws-lab': typeof WsLabRoute
+  '/test-lab': typeof TestLabRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,7 +61,7 @@ export interface FileRoutesByTo {
   '/habits': typeof HabitsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
-  '/ws-lab': typeof WsLabRoute
+  '/test-lab': typeof TestLabRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,13 +70,19 @@ export interface FileRoutesById {
   '/habits': typeof HabitsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
-  '/ws-lab': typeof WsLabRoute
+  '/test-lab': typeof TestLabRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/habits' | '/settings' | '/tasks' | '/ws-lab'
+  fullPaths:
+    | '/'
+    | '/analytics'
+    | '/habits'
+    | '/settings'
+    | '/tasks'
+    | '/test-lab'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/habits' | '/settings' | '/tasks' | '/ws-lab'
+  to: '/' | '/analytics' | '/habits' | '/settings' | '/tasks' | '/test-lab'
   id:
     | '__root__'
     | '/'
@@ -84,7 +90,7 @@ export interface FileRouteTypes {
     | '/habits'
     | '/settings'
     | '/tasks'
-    | '/ws-lab'
+    | '/test-lab'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,16 +99,16 @@ export interface RootRouteChildren {
   HabitsRoute: typeof HabitsRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
-  WsLabRoute: typeof WsLabRoute
+  TestLabRoute: typeof TestLabRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/ws-lab': {
-      id: '/ws-lab'
-      path: '/ws-lab'
-      fullPath: '/ws-lab'
-      preLoaderRoute: typeof WsLabRouteImport
+    '/test-lab': {
+      id: '/test-lab'
+      path: '/test-lab'
+      fullPath: '/test-lab'
+      preLoaderRoute: typeof TestLabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks': {
@@ -149,7 +155,7 @@ const rootRouteChildren: RootRouteChildren = {
   HabitsRoute: HabitsRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
-  WsLabRoute: WsLabRoute,
+  TestLabRoute: TestLabRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

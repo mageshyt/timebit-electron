@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Activity, Send, Trash2 } from "lucide-react";
+import { Activity, Send, Trash2, BellRing } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { inDevelopment } from "@/constants";
 import { getSyncServerUrl } from "@/state/sync-status";
+import { toast } from "sonner";
 
 type LogDirection = "in" | "out" | "system";
 
@@ -27,7 +28,7 @@ const EVENT_PRESETS: EventPreset[] = [
   {
     label: "Test Event",
     type: "test:event",
-    payload: '{"message":"Hello from the WS lab"}',
+    payload: '{"message":"Hello from the Test lab"}',
   },
   {
     label: "ESP32 Status",
@@ -53,11 +54,11 @@ const toWebSocketUrl = (baseUrl: string) => {
   return baseUrl.replace("http://", "ws://");
 };
 
-function WsLabPage() {
+function TestLabPage() {
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [eventType, setEventType] = useState("test:event");
   const [payloadText, setPayloadText] = useState(
-    '{"message":"Hello from the WS lab"}'
+    '{"message":"Hello from the Test lab"}'
   );
   const [selectedPreset, setSelectedPreset] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -66,7 +67,8 @@ function WsLabPage() {
   const socketRef = useRef<WebSocket | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
 
-  const wsUrl = useMemo(() => toWebSocketUrl(getSyncServerUrl()), []);
+  const syncServerUrl = useMemo(() => getSyncServerUrl(), []);
+  const wsUrl = useMemo(() => toWebSocketUrl(syncServerUrl), [syncServerUrl]);
 
   const appendLog = (entry: LogEntry) => {
     setLogs((prev) => {
@@ -198,6 +200,26 @@ function WsLabPage() {
     setSelectedPreset(preset.label);
   };
 
+  const triggerNotificationTest = async (type: "standup" | "water_intake" | "eye_strain") => {
+    try {
+      const res = await fetch(`${syncServerUrl}/wellness/test-notification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      if (res.ok) {
+        toast.success(`Triggered native ${type} notification! 🚀`, {
+          id: `test-trigger-${type}`,
+        });
+      } else {
+        toast.error("Failed to trigger system notification.");
+      }
+    } catch (err) {
+      console.error("Failed to trigger test notification:", err);
+      toast.error("Error communicating with sync server.");
+    }
+  };
+
   if (!inDevelopment) {
     return (
       <div className="flex h-full w-full flex-col p-6 pb-8">
@@ -217,14 +239,14 @@ function WsLabPage() {
 
   return (
     <div className="flex h-full w-full flex-col p-6 pb-8 overflow-y-auto">
-      <div className="mx-auto flex w-full  flex-col gap-6">
+      <div className="mx-auto flex w-full flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-[1.5rem] font-semibold tracking-[-0.02em] text-[#f4f4f5]">
-              WebSocket Lab
+              Test Lab
             </h1>
             <p className="mt-1 text-[0.8125rem] text-[#8e8d92]">
-              Broadcast any event and inspect everything the sync server sends.
+              Trigger wellness alerts and inspect real-time sync WebSocket logs.
             </p>
           </div>
           <div
@@ -237,80 +259,120 @@ function WsLabPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <div className="rounded-xl bg-[#1c1b1d] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
-            <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
-              Event Composer
+          <div className="flex flex-col gap-6">
+            {/* System Notification Tester Panel */}
+            <div className="rounded-xl bg-[#1c1b1d] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+              <div className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
+                <BellRing className="h-3.5 w-3.5 text-[#c0c1ff]" />
+                System Alerts Tester
+              </div>
+              <p className="mt-2 text-[0.75rem] leading-relaxed text-[#8e8d92] mb-4">
+                Trigger native system notifications from the Electron main process to verify styling, action handlers, and database logging.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => triggerNotificationTest("standup")}
+                  className="flex items-center justify-between rounded-md bg-[#201f22] hover:bg-[#2a2a2c] border border-transparent hover:border-[#c0c1ff]/15 px-4 py-2.5 text-[0.8125rem] text-[#e4e4e6] transition-all cursor-pointer group"
+                >
+                  <span className="group-hover:text-[#c0c1ff] transition-colors">Stand-up Alert</span>
+                  <span className="text-[0.6875rem] text-[#5c5b61] font-mono">60m standup</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerNotificationTest("water_intake")}
+                  className="flex items-center justify-between rounded-md bg-[#201f22] hover:bg-[#2a2a2c] border border-transparent hover:border-[#c0c1ff]/15 px-4 py-2.5 text-[0.8125rem] text-[#e4e4e6] transition-all cursor-pointer group"
+                >
+                  <span className="group-hover:text-[#c0c1ff] transition-colors">Hydration Alert</span>
+                  <span className="text-[0.6875rem] text-[#5c5b61] font-mono">30m water_intake</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerNotificationTest("eye_strain")}
+                  className="flex items-center justify-between rounded-md bg-[#201f22] hover:bg-[#2a2a2c] border border-transparent hover:border-[#c0c1ff]/15 px-4 py-2.5 text-[0.8125rem] text-[#e4e4e6] transition-all cursor-pointer group"
+                >
+                  <span className="group-hover:text-[#c0c1ff] transition-colors">Eye Strain Alert</span>
+                  <span className="text-[0.6875rem] text-[#5c5b61] font-mono">20m eye_strain</span>
+                </button>
+              </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-4">
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
-                Presets
-                <select
-                  value={selectedPreset}
-                  onChange={(event) => {
-                    const preset = EVENT_PRESETS.find(
-                      (item) => item.label === event.target.value
-                    );
-                    if (preset) {
-                      handlePreset(preset);
-                    } else {
-                      setSelectedPreset("");
-                    }
-                  }}
-                  className="mt-2 w-full rounded-md border-0 bg-[#201f22] px-3 py-2 text-[0.8125rem] text-[#e4e4e6] outline-none focus:ring-1 focus:ring-[#c0c1ff]/40"
-                >
-                  <option value="">Custom</option>
-                  {EVENT_PRESETS.map((preset) => (
-                    <option key={preset.label} value={preset.label}>
-                      {preset.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            {/* Event Composer */}
+            <div className="rounded-xl bg-[#1c1b1d] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+              <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
+                WS Event Composer
+              </div>
 
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
-                Event Type
-                <input
-                  value={eventType}
-                  onChange={(event) => setEventType(event.target.value)}
-                  className="mt-2 w-full rounded-md border-0 bg-[#201f22] px-3 py-2 text-[0.8125rem] text-[#e4e4e6] outline-none focus:ring-1 focus:ring-[#c0c1ff]/40"
-                  placeholder="test:event"
-                />
-              </label>
+              <div className="mt-4 flex flex-col gap-4">
+                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
+                  Presets
+                  <select
+                    value={selectedPreset}
+                    onChange={(event) => {
+                      const preset = EVENT_PRESETS.find(
+                        (item) => item.label === event.target.value
+                      );
+                      if (preset) {
+                        handlePreset(preset);
+                      } else {
+                        setSelectedPreset("");
+                      }
+                    }}
+                    className="mt-2 w-full rounded-md border-0 bg-[#201f22] px-3 py-2 text-[0.8125rem] text-[#e4e4e6] outline-none focus:ring-1 focus:ring-[#c0c1ff]/40 cursor-pointer"
+                  >
+                    <option value="">Custom</option>
+                    {EVENT_PRESETS.map((preset) => (
+                      <option key={preset.label} value={preset.label}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
-                Payload (JSON)
-                <textarea
-                  value={payloadText}
-                  onChange={(event) => setPayloadText(event.target.value)}
-                  rows={6}
-                  className="mt-2 w-full resize-none rounded-md border-0 bg-[#201f22] px-3 py-2 font-mono text-[0.75rem] text-[#e4e4e6] outline-none focus:ring-1 focus:ring-[#c0c1ff]/40"
-                />
-              </label>
+                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
+                  Event Type
+                  <input
+                    value={eventType}
+                    onChange={(event) => setEventType(event.target.value)}
+                    className="mt-2 w-full rounded-md border-0 bg-[#201f22] px-3 py-2 text-[0.8125rem] text-[#e4e4e6] outline-none focus:ring-1 focus:ring-[#c0c1ff]/40"
+                    placeholder="test:event"
+                  />
+                </label>
 
-              {errorMessage ? (
-                <div className="rounded-md border border-[#3a2a2a] bg-[#201f22] px-3 py-2 text-[0.75rem] text-[#ffb4b4]">
-                  {errorMessage}
+                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
+                  Payload (JSON)
+                  <textarea
+                    value={payloadText}
+                    onChange={(event) => setPayloadText(event.target.value)}
+                    rows={4}
+                    className="mt-2 w-full resize-none rounded-md border-0 bg-[#201f22] px-3 py-2 font-mono text-[0.75rem] text-[#e4e4e6] outline-none focus:ring-1 focus:ring-[#c0c1ff]/40"
+                  />
+                </label>
+
+                {errorMessage ? (
+                  <div className="rounded-md border border-[#3a2a2a] bg-[#201f22] px-3 py-2 text-[0.75rem] text-[#ffb4b4]">
+                    {errorMessage}
+                  </div>
+                ) : null}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-md bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] px-4 py-2 text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#131315] hover:opacity-90 cursor-pointer"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Send Event
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="flex items-center justify-center gap-2 rounded-md bg-[#2a2a2c] px-3 py-2 text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] hover:text-[#e4e4e6] cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Clear
+                  </button>
                 </div>
-              ) : null}
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleSend}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-md bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] px-4 py-2 text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#131315] hover:opacity-90"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  Send Event
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="flex items-center justify-center gap-2 rounded-md bg-[#2a2a2c] px-3 py-2 text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92] hover:text-[#e4e4e6]"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Clear
-                </button>
               </div>
             </div>
           </div>
@@ -326,7 +388,7 @@ function WsLabPage() {
             </div>
             <div
               ref={logRef}
-              className="h-[420px] overflow-y-auto rounded-lg bg-[#0b0b0d] p-3 font-mono text-[0.75rem] text-[#c9c9cc]"
+              className="h-[520px] overflow-y-auto rounded-lg bg-[#0b0b0d] p-3 font-mono text-[0.75rem] text-[#c9c9cc]"
             >
               {logs.length === 0 ? (
                 <div className="text-[#5c5b61]">No events yet.</div>
@@ -358,6 +420,6 @@ function WsLabPage() {
   );
 }
 
-export const Route = createFileRoute("/ws-lab")({
-  component: WsLabPage,
+export const Route = createFileRoute("/test-lab")({
+  component: TestLabPage,
 });

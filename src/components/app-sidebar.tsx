@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "analytics", label: "Analytics", path: "/analytics", icon: BarChart2 },
   { id: "settings", label: "Settings", path: "/settings", icon: Settings },
   ...(inDevelopment
-    ? [{ id: "ws-lab", label: "WS Lab", path: "/ws-lab", icon: Terminal }]
+    ? [{ id: "test-lab", label: "Test Lab", path: "/test-lab", icon: Terminal }]
     : []),
 ];
 
