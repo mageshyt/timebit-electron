@@ -1,6 +1,6 @@
 import type { Prisma, Task as PrismaTask } from "@prisma/client";
 import { getPrismaClient } from "../db";
-import { getDefaultUserId } from "./user.service";
+import { getDefaultUserId, updateProductivityStreak } from "./user.service";
 
 export type TaskStatus = "TODO" | "IN PROGRESS" | "DONE";
 export type TaskPriority = "High" | "Medium" | "Low";
@@ -256,6 +256,9 @@ export const updateTask = async (
   }
 
   const updated = await prisma.task.update({ where: { id }, data });
+  if (finalDone && !existing.done) {
+    await updateProductivityStreak();
+  }
   return serializeTask(updated);
 };
 

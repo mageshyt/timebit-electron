@@ -1,6 +1,6 @@
 import type { PomodoroSession as PrismaSession } from "@prisma/client";
 import { getPrismaClient } from "../db";
-import { getDefaultUserId } from "./user.service";
+import { getDefaultUserId, updateProductivityStreak } from "./user.service";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +96,10 @@ export const completeSession = async (
     where: { id },
     data: { status: "completed", endedAt, durationMins: Math.max(1, durationMins) },
   });
+
+  if (existing.status !== "completed") {
+    await updateProductivityStreak();
+  }
 
   return serialize(updated);
 };

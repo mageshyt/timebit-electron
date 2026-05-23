@@ -86,66 +86,19 @@ export const getPerformanceMetrics = async (daysRange: number) => {
       : Math.round(((currentTasksCount - prevTasksCount) / prevTasksCount) * 100);
 
   // ─── 4. FOCUS STREAKS ─────────────────────────────────────────────────────────
-  // Find all distinct days with completed pomodoros
+  // Fetch productivity streak directly from UserProfile
+  const userProfile = await prisma.userProfile.findUnique({
+    where: { id: userId },
+    select: { productivityStreak: true, productivityBestStreak: true },
+  });
+  const currentStreak = userProfile?.productivityStreak ?? 0;
+  const bestStreak = userProfile?.productivityBestStreak ?? 0;
+
+  // Query completed sessions for peak performance window calculation (without expensive sorting)
   const allCompletedSessions = await prisma.pomodoroSession.findMany({
     where: { userId, status: "completed" },
     select: { startedAt: true },
-    orderBy: { startedAt: "desc" },
   });
-
-  const activeDaysSet = new Set(
-    allCompletedSessions.map((s) => startOfDay(s.startedAt).getTime())
-  );
-  const activeDays = Array.from(activeDaysSet).sort((a, b) => b - a); // descending
-
-  // Compute Current Streak
-  let currentStreak = 0;
-  let streakCheckDate = today;
-
-  if (activeDaysSet.has(streakCheckDate.getTime())) {
-    currentStreak = 1;
-    while (true) {
-      streakCheckDate = addDays(streakCheckDate, -1);
-      if (activeDaysSet.has(streakCheckDate.getTime())) {
-        currentStreak++;
-      } else {
-        break;
-      }
-    }
-  } else {
-    // Check if it started yesterday
-    streakCheckDate = addDays(today, -1);
-    if (activeDaysSet.has(streakCheckDate.getTime())) {
-      currentStreak = 1;
-      while (true) {
-        streakCheckDate = addDays(streakCheckDate, -1);
-        if (activeDaysSet.has(streakCheckDate.getTime())) {
-          currentStreak++;
-        } else {
-          break;
-        }
-      }
-    }
-  }
-
-  // Compute Best Streak (Personal Best)
-  let bestStreak = 0;
-  if (activeDays.length > 0) {
-    const ascendingDays = [...activeDays].reverse();
-    let tempStreak = 1;
-    bestStreak = 1;
-    for (let i = 1; i < ascendingDays.length; i++) {
-      const prevDay = ascendingDays[i - 1];
-      const currDay = ascendingDays[i];
-      const diff = Math.round((currDay - prevDay) / (24 * 60 * 60 * 1000));
-      if (diff === 1) {
-        tempStreak++;
-        bestStreak = Math.max(bestStreak, tempStreak);
-      } else if (diff > 1) {
-        tempStreak = 1;
-      }
-    }
-  }
 
   // ─── 5. WEEKLY FOCUS DISTRIBUTION CHART ──────────────────────────────────────
   // Stacked categories minutes by day of week (MON-SUN)

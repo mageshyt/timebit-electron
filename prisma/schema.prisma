@@ -49,6 +49,9 @@ model UserProfile {
     wellnessEyeStrainEnabled Boolean @default(true)
     wakeTime               String?
     sleepTime              String?
+    productivityStreak     Int      @default(0)
+    productivityBestStreak Int      @default(0)
+    streakLastActive       DateTime?
     createdAt              DateTime @default(now())
 
     tasks                  Task[]

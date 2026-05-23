@@ -1,5 +1,5 @@
 import { getPrismaClient } from "../db";
-import { getDefaultUserId } from "./user.service";
+import { getDefaultUserId, updateProductivityStreak } from "./user.service";
 
 export type HabitView = {
   id: number;
@@ -253,6 +253,7 @@ export const completeHabit = async (id: number): Promise<HabitView | null> => {
         userId,
       },
     });
+    await updateProductivityStreak();
   }
 
   const getStartOfWeek = (date: Date) => {
@@ -317,6 +318,7 @@ export const toggleHabitLog = async (id: number): Promise<{ id: number; done: bo
     // No log yet → create as completed
     await prisma.habitLog.create({ data: { habitId: id, date: today, completed: true } });
     newDone = true;
+    await updateProductivityStreak();
   } else {
     // Flip existing log
     newDone = !existingLog.completed;
@@ -324,6 +326,9 @@ export const toggleHabitLog = async (id: number): Promise<{ id: number; done: bo
       where: { id: existingLog.id },
       data: { completed: newDone },
     });
+    if (newDone) {
+      await updateProductivityStreak();
+    }
   }
 
   return { id, done: newDone };
