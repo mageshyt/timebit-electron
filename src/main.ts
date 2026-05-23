@@ -12,6 +12,7 @@ import { startSyncServer } from "./server/sync-server";
 import { connectDatabase, disconnectDatabase } from "./server/db";
 import { ensureDefaultUser } from "./server/services/user.service";
 import { getBasePath } from "./utils/path";
+import { emitWellnessUpdate } from "./server/engine/wellness-engine";
 
 function createWindow() {
   const basePath = getBasePath();
@@ -80,6 +81,7 @@ app.whenReady().then(async () => {
     await connectDatabase();
     await ensureDefaultUser();
     startSyncServer({ port: 5719 });
+    void emitWellnessUpdate();
   } catch (error) {
     console.error("Error during app initialization:", error);
   }
