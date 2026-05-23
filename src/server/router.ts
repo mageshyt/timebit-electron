@@ -1,6 +1,7 @@
 import http from "node:http";
 import { healthRoute } from "./routes/health.route";
 import { summaryRoute } from "./routes/summary.route";
+import { getAnalyticsMetricsRoute } from "./routes/analytics.route";
 import {
   listTasksRoute,
   createTaskRoute,
@@ -88,6 +89,12 @@ export function createRouter(): http.RequestListener {
     // GET /summary
     if (method === "GET" && pathname === "/summary") {
       void summaryRoute(req, res);
+      return;
+    }
+
+    // GET /analytics
+    if (method === "GET" && pathname === "/analytics") {
+      void getAnalyticsMetricsRoute(req, res);
       return;
     }
 
