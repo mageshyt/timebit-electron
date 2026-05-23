@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect } from "react";
-import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { getSyncServerUrl } from "@/state/sync-status";
 
 type WebSocketEventContextValue = Record<string, never>;
@@ -14,6 +14,8 @@ const toWebSocketUrl = (baseUrl: string) => {
 };
 
 export function WebSocketEventProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     let active = true;
     let socket: WebSocket | null = null;
@@ -21,45 +23,6 @@ export function WebSocketEventProvider({ children }: { children: React.ReactNode
 
     const syncServerUrl = getSyncServerUrl();
     const wsUrl = toWebSocketUrl(syncServerUrl);
-
-    const logWellnessBreak = async (type: "standup" | "eye_strain") => {
-      try {
-        const res = await fetch(`${syncServerUrl}/wellness/log`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ type }),
-        });
-        if (res.ok) {
-          toast.success(
-            `Logged your ${type === "standup" ? "stretch break" : "eye break"}!`,
-            {
-              id: `wellness-success-${type}`,
-            }
-          );
-        }
-      } catch (err) {
-        console.error("Failed to log wellness break:", err);
-        toast.error("Failed to log action.");
-      }
-    };
-
-    const logHydration = async () => {
-      try {
-        const res = await fetch(`${syncServerUrl}/wellness/water`, {
-          method: "POST",
-        });
-        if (res.ok) {
-          toast.success("Glass of water logged! 💧", {
-            id: "wellness-success-hydration",
-          });
-        }
-      } catch (err) {
-        console.error("Failed to log hydration:", err);
-        toast.error("Failed to log water intake.");
-      }
-    };
 
     const connect = () => {
       if (!active) return;
@@ -69,39 +32,23 @@ export function WebSocketEventProvider({ children }: { children: React.ReactNode
         try {
           const data = JSON.parse(event.data) as { type: string };
 
-          if (data.type === "wellness:standup") {
-            toast.info("Time to stand up and stretch! 🚶‍♂️", {
-              id: "wellness-standup",
-              duration: Number.POSITIVE_INFINITY,
-              action: {
-                label: "Done",
-                onClick: () => {
-                  void logWellnessBreak("standup");
-                },
-              },
-            });
-          } else if (data.type === "wellness:hydration") {
-            toast.info("Time for a glass of water! 💧", {
-              id: "wellness-hydration",
-              duration: Number.POSITIVE_INFINITY,
-              action: {
-                label: "Done",
-                onClick: () => {
-                  void logHydration();
-                },
-              },
-            });
-          } else if (data.type === "wellness:eye_strain") {
-            toast.info("Look 20 feet away for 20 seconds! 👀", {
-              id: "wellness-eye_strain",
-              duration: Number.POSITIVE_INFINITY,
-              action: {
-                label: "Done",
-                onClick: () => {
-                  void logWellnessBreak("eye_strain");
-                },
-              },
-            });
+          if (data.type === "wellness:updated") {
+            void queryClient.invalidateQueries({ queryKey: ["wellness", "water"] });
+          } else if (data.type === "habit:updated") {
+            void queryClient.invalidateQueries({ queryKey: ["habits"] });
+          } else if (
+            data.type === "task:created" ||
+            data.type === "task:updated" ||
+            data.type === "task:deleted"
+          ) {
+            void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+            void queryClient.invalidateQueries({ queryKey: ["tasks-summary"] });
+          } else if (
+            data.type === "pomodoro:started" ||
+            data.type === "pomodoro:completed" ||
+            data.type === "pomodoro:abandoned"
+          ) {
+            void queryClient.invalidateQueries({ queryKey: ["pomodoro"] });
           }
         } catch {
           // ignore malformed payloads
@@ -130,7 +77,7 @@ export function WebSocketEventProvider({ children }: { children: React.ReactNode
         socket.close();
       }
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <WebSocketEventContext.Provider value={{}}>
