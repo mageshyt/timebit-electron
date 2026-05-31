@@ -1,6 +1,7 @@
 import type http from "node:http";
 import { readBody, sendJson } from "../router";
 import { broadcaster } from "../ws/broadcaster";
+import { OLED_IMAGES } from "../assets/oled-images";
 import {
   startSession,
   completeSession,
@@ -34,6 +35,20 @@ export async function startSessionRoute(
   });
 
   broadcaster.broadcast({ type: "pomodoro:started", payload: session });
+
+  let imgKey: keyof typeof OLED_IMAGES = "default";
+  if (session.type === "focus") imgKey = "focus";
+  else if (session.type === "short_break") imgKey = "shortBreak";
+  else if (session.type === "long_break") imgKey = "longBreak";
+
+  broadcaster.broadcast({
+    type: "oled:image",
+    payload: {
+      image: OLED_IMAGES[imgKey],
+      persistent: true,
+    },
+  });
+
   sendJson(res, 201, { data: session });
 }
 
@@ -52,6 +67,24 @@ export async function completeSessionRoute(
   }
 
   broadcaster.broadcast({ type: "pomodoro:completed", payload: session });
+
+  broadcaster.broadcast({
+    type: "oled:image",
+    payload: {
+      image: OLED_IMAGES.default,
+      persistent: true,
+    },
+  });
+
+  broadcaster.broadcast({
+    type: "oled:image",
+    payload: {
+      image: OLED_IMAGES.completed,
+      persistent: false,
+      durationMs: 30000,
+    },
+  });
+
   sendJson(res, 200, { data: session });
 }
 
@@ -69,6 +102,15 @@ export async function abandonSessionRoute(
   }
 
   broadcaster.broadcast({ type: "pomodoro:abandoned", payload: session });
+
+  broadcaster.broadcast({
+    type: "oled:image",
+    payload: {
+      image: OLED_IMAGES.default,
+      persistent: true,
+    },
+  });
+
   sendJson(res, 200, { data: session });
 }
 
