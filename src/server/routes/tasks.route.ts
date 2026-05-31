@@ -1,6 +1,7 @@
 import type http from "node:http";
 import { readBody, sendJson } from "../router";
 import { broadcaster } from "../ws/broadcaster";
+import { OLED_IMAGES } from "../assets/oled-images";
 import {
   createTask,
   deleteTask,
@@ -152,6 +153,18 @@ export async function updateTaskRoute(
   }
 
   broadcaster.broadcast({ type: "task:updated", payload: updated });
+
+  if (body.status === "DONE" || body.done === true) {
+    broadcaster.broadcast({
+      type: "oled:image",
+      payload: {
+        image: OLED_IMAGES.completed,
+        persistent: false,
+        durationMs: 10000,
+      },
+    });
+  }
+
   sendJson(res, 200, { data: updated });
 }
 
