@@ -186,7 +186,7 @@ export function TaskDialog({ open, title, initial, onClose, onSave }: Props) {
                     {form.scheduleAt ? format(new Date(form.scheduleAt), "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 border-0 rounded-xl" style={{ background: "#2a2a2c", boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)" }}>
+                <PopoverContent className="w-auto p-0 border-0 rounded-xl bg-[#2a2a2c] text-white" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)" }}>
                   <Calendar
                     mode="single"
                     selected={form.scheduleAt ? new Date(form.scheduleAt) : undefined}
@@ -211,7 +211,7 @@ export function TaskDialog({ open, title, initial, onClose, onSave }: Props) {
                     {form.dueTime ? format(new Date(form.dueTime), "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 border-0 rounded-xl" style={{ background: "#2a2a2c", boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)" }}>
+                <PopoverContent className="w-auto p-0 border-0 rounded-xl text-white" style={{ background: "#2a2a2c", boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(70,69,84,0.15)" }}>
                   <Calendar
                     mode="single"
                     selected={form.dueTime ? new Date(form.dueTime) : undefined}

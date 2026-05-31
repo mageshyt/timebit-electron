@@ -45,6 +45,7 @@ export function WellnessAlertsCard() {
           </div>
           <Switch
             checked={standupEnabled}
+      
             onCheckedChange={(value) => updateToggle("wellnessStandupEnabled", value)}
           />
         </div>

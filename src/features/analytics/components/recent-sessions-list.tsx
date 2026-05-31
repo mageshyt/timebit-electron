@@ -8,9 +8,9 @@ interface RecentSessionsListProps {
 
 export function RecentSessionsList({ recentSessions }: RecentSessionsListProps) {
   return (
-    <div className="col-span-12 lg:col-span-5 bg-[#1c1b1d] p-6 rounded-xl flex flex-col shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+    <div className="col-span-12 lg:col-span-5 bg-[#1c1b1d] p-6 rounded-xl h-fit flex flex-col shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
       <h3 className="text-lg font-semibold tracking-[-0.02em] text-white mb-6">Recent Sessions</h3>
-      <div className="space-y-3.5 flex-1 pr-1 overflow-y-auto max-h-[300px]">
+      <div className="space-y-3.5 flex-1 pr-1 overflow-y-auto max-h-[350px]">
         {recentSessions.length > 0 ? (
           recentSessions.map((session) => {
             const Icon = getCategoryIcon(session.category);

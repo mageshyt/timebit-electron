@@ -12,6 +12,7 @@ export const SESSION_CATEGORIES = [
 
 export type SessionCategory = (typeof SESSION_CATEGORIES)[number];
 
+export type TimerMode = "focus" | "short_break" | "long_break";
 
 interface TimerState {
   startTime: number | null;
@@ -23,6 +24,10 @@ interface TimerState {
   taskId: number | null;
   taskLabel: string | null;
   sessionCount: number;
+  mode: TimerMode;
+  focusDurationMins: number;
+  focusShortBreakMins: number;
+  focusLongBreakMins: number;
 }
 
 interface TimerActions {
@@ -35,6 +40,12 @@ interface TimerActions {
   _onSessionCompleted: () => void;
   _onSessionAbandoned: () => void;
   setSessionCount: (n: number) => void;
+  setMode: (mode: TimerMode) => void;
+  syncSettings: (settings: {
+    focusDurationMins: number;
+    focusShortBreakMins: number;
+    focusLongBreakMins: number;
+  }) => void;
 }
 
 type TimerStore = TimerState & TimerActions;
@@ -49,14 +60,19 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   taskId: null,
   taskLabel: null,
   sessionCount: 0,
+  mode: "focus",
+  focusDurationMins: 25,
+  focusShortBreakMins: 5,
+  focusLongBreakMins: 15,
 
   _tick() {
-    const { isActive, startTime } = get();
+    const { isActive, startTime, sessionDuration } = get();
     if (!isActive || startTime === null) return;
     const elapsed = Date.now() - startTime;
-    set({ elapsed });
+    const finalElapsed = Math.min(elapsed, sessionDuration);
+    set({ elapsed: finalElapsed });
     // Auto-complete when session time is reached
-    if (elapsed >= get().sessionDuration) {
+    if (elapsed >= sessionDuration) {
       set({ isActive: false });
     }
   },
@@ -66,7 +82,17 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   reset() {
-    set({ isActive: false, startTime: null, elapsed: 0, activeSessionId: null });
+    const { mode, focusDurationMins, focusShortBreakMins, focusLongBreakMins } = get();
+    let durationMins = focusDurationMins;
+    if (mode === "short_break") durationMins = focusShortBreakMins;
+    else if (mode === "long_break") durationMins = focusLongBreakMins;
+    set({
+      isActive: false,
+      startTime: null,
+      elapsed: 0,
+      activeSessionId: null,
+      sessionDuration: durationMins * 60 * 1000,
+    });
   },
 
   setCategory(cat) {
@@ -83,23 +109,80 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   _onSessionCompleted() {
-    set((s) => ({
+    const { mode, sessionCount, focusDurationMins, focusShortBreakMins, focusLongBreakMins } = get();
+    if (mode === "focus") {
+      const newSessionCount = sessionCount + 1;
+      const nextMode = newSessionCount % 4 === 0 ? "long_break" : "short_break";
+      const nextDurationMins = nextMode === "long_break" ? focusLongBreakMins : focusShortBreakMins;
+      set({
+        isActive: false,
+        startTime: null,
+        elapsed: 0,
+        activeSessionId: null,
+        sessionCount: newSessionCount,
+        taskId: null,
+        taskLabel: null,
+        mode: nextMode,
+        sessionDuration: nextDurationMins * 60 * 1000,
+      });
+    } else {
+      // Completed short_break or long_break
+      set({
+        isActive: false,
+        startTime: null,
+        elapsed: 0,
+        activeSessionId: null,
+        mode: "focus",
+        sessionDuration: focusDurationMins * 60 * 1000,
+      });
+    }
+  },
+
+  _onSessionAbandoned() {
+    const { mode, focusDurationMins, focusShortBreakMins, focusLongBreakMins } = get();
+    let durationMins = focusDurationMins;
+    if (mode === "short_break") durationMins = focusShortBreakMins;
+    else if (mode === "long_break") durationMins = focusLongBreakMins;
+    set({
       isActive: false,
       startTime: null,
       elapsed: 0,
       activeSessionId: null,
-      sessionCount: s.sessionCount + 1,
-      taskId: null,
-      taskLabel: null,
-    }));
-  },
-
-  _onSessionAbandoned() {
-    set({ isActive: false, startTime: null, elapsed: 0, activeSessionId: null });
+      sessionDuration: durationMins * 60 * 1000,
+    });
   },
 
   setSessionCount(n) {
     set({ sessionCount: n });
+  },
+
+  setMode(mode) {
+    const { isActive, focusDurationMins, focusShortBreakMins, focusLongBreakMins } = get();
+    if (isActive) return;
+    let durationMins = focusDurationMins;
+    if (mode === "short_break") durationMins = focusShortBreakMins;
+    else if (mode === "long_break") durationMins = focusLongBreakMins;
+    set({
+      mode,
+      elapsed: 0,
+      startTime: null,
+      sessionDuration: durationMins * 60 * 1000,
+    });
+  },
+
+  syncSettings(settings) {
+    const { isActive, mode } = get();
+    set({
+      focusDurationMins: settings.focusDurationMins,
+      focusShortBreakMins: settings.focusShortBreakMins,
+      focusLongBreakMins: settings.focusLongBreakMins,
+    });
+    if (!isActive) {
+      let durationMins = settings.focusDurationMins;
+      if (mode === "short_break") durationMins = settings.focusShortBreakMins;
+      else if (mode === "long_break") durationMins = settings.focusLongBreakMins;
+      set({ sessionDuration: durationMins * 60 * 1000 });
+    }
   },
 }));
 

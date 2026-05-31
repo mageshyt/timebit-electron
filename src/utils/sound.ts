@@ -142,3 +142,68 @@ export function playStartSessionSound() {
   }
 }
 
+export function getSoundPreference(key: string, defaultValue = true): boolean {
+  try {
+    const val = localStorage.getItem(key);
+    return val === null ? defaultValue : val === "true";
+  } catch {
+    return defaultValue;
+  }
+}
+
+export function playFocusCompleteSound() {
+  if (!getSoundPreference("timebit:sound:focus_complete")) return;
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    const playTone = (freq: number, start: number, dur: number, vol = 0.15) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + start);
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(vol, now + start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+      osc.start(now + start);
+      osc.stop(now + start + dur);
+    };
+
+    playTone(880, 0, 0.25);
+    playTone(1174.66, 0.15, 0.35);
+  } catch (err) {
+    console.warn("Failed to play focus complete sound:", err);
+  }
+}
+
+export function playBreakCompleteSound() {
+  if (!getSoundPreference("timebit:sound:break_complete")) return;
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    const playTone = (freq: number, start: number, dur: number, vol = 0.15) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now + start);
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(vol, now + start + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+      osc.start(now + start);
+      osc.stop(now + start + dur);
+    };
+
+    playTone(523.25, 0, 0.3);
+    playTone(659.25, 0.1, 0.3);
+    playTone(783.99, 0.2, 0.4);
+  } catch (err) {
+    console.warn("Failed to play break complete sound:", err);
+  }
+}
+
+

@@ -87,10 +87,10 @@ export function HabitsSettingsCard() {
           Configured Habits
         </div>
         <Button
+          variant="secondary"
           type="button"
-          size="sm"
+          className="flex items-center gap-2"
           onClick={openCreate}
-          className="bg-[#c0c1ff] text-[#1000a9] hover:opacity-90"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Habit
@@ -199,11 +199,11 @@ export function HabitsSettingsCard() {
               </Select>
             </label>
 
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#c0c1ff] text-[#1000a9] hover:opacity-90">
+              <Button type="submit" variant="secondary">
                 {editingId ? "Save Changes" : "Create Habit"}
               </Button>
             </DialogFooter>

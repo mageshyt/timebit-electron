@@ -61,6 +61,7 @@ function TestLabPage() {
     '{"message":"Hello from the Test lab"}'
   );
   const [selectedPreset, setSelectedPreset] = useState("");
+  const [oledBase64, setOledBase64] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
@@ -294,6 +295,54 @@ function TestLabPage() {
                   <span className="group-hover:text-[#c0c1ff] transition-colors">Eye Strain Alert</span>
                   <span className="text-[0.6875rem] text-[#5c5b61] font-mono">20m eye_strain</span>
                 </button>
+            </div>
+
+            {/* OLED Image Streamer */}
+            <div className="rounded-xl bg-[#1c1b1d] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+              <div className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-[#8e8d92]">
+                <Activity className="h-3.5 w-3.5 text-[#8083ff]" />
+                OLED Image Streamer
+              </div>
+              <p className="mt-2 text-[0.75rem] leading-relaxed text-[#8e8d92] mb-4">
+                Paste a 1024-byte monochrome bit array (encoded in Base64) to stream and display it on the physical OLED screen.
+              </p>
+              <div className="flex flex-col gap-3">
+                <textarea
+                  value={oledBase64}
+                  onChange={(e) => setOledBase64(e.target.value)}
+                  placeholder="Paste base64 string here..."
+                  rows={4}
+                  className="w-full resize-none rounded-md border-0 bg-[#201f22] px-3 py-2 font-mono text-[0.7rem] text-[#e4e4e6] outline-none focus:ring-1 focus:ring-[#c0c1ff]/40"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const base64Data = oledBase64.trim();
+                    if (!base64Data) {
+                      toast.error("Please enter base64 image data.");
+                      return;
+                    }
+                    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+                      toast.error("WebSocket is not connected.");
+                      return;
+                    }
+                    const event = {
+                      type: "oled:image",
+                      payload: { image: base64Data }
+                    };
+                    socketRef.current.send(JSON.stringify(event));
+                    appendLog({
+                      id: crypto.randomUUID(),
+                      time: new Date().toLocaleTimeString(),
+                      direction: "out",
+                      message: JSON.stringify(event, null, 2),
+                    });
+                    toast.success("OLED image streamed! 🎨");
+                  }}
+                  className="flex items-center justify-center gap-2 rounded-md bg-[#2a2a2c] hover:bg-[#323235] border border-transparent hover:border-[#c0c1ff]/15 px-4 py-2 text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-[#e4e4e6] cursor-pointer transition-all"
+                >
+                  Stream to OLED
+                </button>
               </div>
             </div>
 
@@ -417,9 +466,11 @@ function TestLabPage() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
 export const Route = createFileRoute("/test-lab")({
   component: TestLabPage,
 });
+  

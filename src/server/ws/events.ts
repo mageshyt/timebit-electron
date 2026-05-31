@@ -19,6 +19,7 @@ export type WsEventType =
   | "wellness:standup"
   | "wellness:hydration"
   | "wellness:eye_strain"
+  | "oled:image"
   | "test:event";
 
 export interface WsEvent<T = unknown> {

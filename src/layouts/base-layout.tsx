@@ -29,7 +29,7 @@ export default function BaseLayout({
       </div>
 
       {/* System Footer */}
-      <SystemFooter />
+      {/* <SystemFooter /> */}
     </div>
   );
 }

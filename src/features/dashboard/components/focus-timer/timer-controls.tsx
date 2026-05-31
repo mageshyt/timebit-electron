@@ -2,7 +2,12 @@ import { Square, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useTimerStore } from "../../store/timer.store";
 import { useStartSession, useCompleteSession, useAbandonSession } from "../../hooks/use-pomodoro";
-import { playSuccessChime, playStartSessionSound } from "@/utils/sound";
+import {
+  playSuccessChime,
+  playStartSessionSound,
+  playFocusCompleteSound,
+  playBreakCompleteSound,
+} from "@/utils/sound";
 
 export function TimerControls() {
   const isActive = useTimerStore((s) => s.isActive);
@@ -12,6 +17,7 @@ export function TimerControls() {
   const taskLabel = useTimerStore((s) => s.taskLabel);
   const elapsed = useTimerStore((s) => s.elapsed);
   const sessionDuration = useTimerStore((s) => s.sessionDuration);
+  const mode = useTimerStore((s) => s.mode);
 
   const pause = useTimerStore((s) => s.pause);
   const _onSessionStarted = useTimerStore((s) => s._onSessionStarted);
@@ -33,16 +39,19 @@ export function TimerControls() {
     if (isActive || activeSessionId !== null) return;
     try {
       const session = await startMutation.mutateAsync({
-        category,
-        taskId,
+        type: mode,
+        category: mode === "focus" ? category : "Break",
+        taskId: mode === "focus" ? taskId : null,
         durationMins: Math.round(sessionDuration / 60000),
       });
       _onSessionStarted(session.id);
       playStartSessionSound();
-      toast.success("Session started", {
-        description: taskLabel
+      toast.success(mode === "focus" ? "Focus session started" : "Break started", {
+        description: mode === "focus" && taskLabel
           ? `Focusing on: ${taskLabel}`
-          : `Category: ${category}`,
+          : mode === "focus"
+          ? `Category: ${category}`
+          : `Enjoy your ${mode === "short_break" ? "short" : "long"} break!`,
       });
     } catch {
       toast.error("Failed to start session");
@@ -60,10 +69,17 @@ export function TimerControls() {
       const actualMins = Math.max(1, Math.round(elapsed / 60000));
       await completeMutation.mutateAsync({ id: activeSessionId, actualMins });
       _onSessionCompleted();
-      playSuccessChime();
-      toast.success("Session completed! 🎉", {
-        description: `Great work — ${actualMins} min of focused time logged.`,
-      });
+      if (mode === "focus") {
+        playFocusCompleteSound();
+        toast.success("Focus session completed! 🎉", {
+          description: `Great work — ${actualMins} min of focused time logged.`,
+        });
+      } else {
+        playBreakCompleteSound();
+        toast.success("Break completed! ☕️", {
+          description: "Time to get back to focus.",
+        });
+      }
     } catch {
       toast.error("Failed to complete session");
     }
@@ -78,7 +94,7 @@ export function TimerControls() {
     try {
       await abandonMutation.mutateAsync({ id: activeSessionId });
       _onSessionAbandoned();
-      toast.warning("Session abandoned");
+      toast.warning(mode === "focus" ? "Focus session abandoned" : "Break abandoned");
     } catch {
       toast.error("Failed to record abandonment");
     }
@@ -117,7 +133,9 @@ export function TimerControls() {
           ? "Pause"
           : activeSessionId !== null
           ? "Resume"
-          : "Start Session"}
+          : mode === "focus"
+          ? "Start Session"
+          : "Start Break"}
       </button>
 
       {/* Complete (active only) */}
