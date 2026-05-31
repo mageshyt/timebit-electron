@@ -2,6 +2,7 @@ import { Notification } from "electron";
 import { getPrismaClient } from "../db";
 import { broadcaster } from "../ws/broadcaster";
 import { logWaterIntake, logWellnessBreak } from "../services/wellness.service";
+import { OLED_IMAGES } from "../assets/oled-images";
 
 const STANDUP_INTERVAL_MINUTES = 60;
 const HYDRATION_INTERVAL_MINUTES = 30;
@@ -164,6 +165,14 @@ export const emitWellnessUpdate = async () => {
         broadcaster.broadcast({
           type: "wellness:hydration",
           payload: {},
+        });
+        broadcaster.broadcast({
+          type: "oled:image",
+          payload: {
+            image: OLED_IMAGES.hydration,
+            persistent: false,
+            durationMs: 30000,
+          },
         });
       }
     }

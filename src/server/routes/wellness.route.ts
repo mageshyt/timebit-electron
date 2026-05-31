@@ -2,6 +2,7 @@ import type http from "node:http";
 import { readBody, sendJson } from "../router";
 import { broadcaster } from "../ws/broadcaster";
 import { showSystemNotification } from "../engine/wellness-engine";
+import { OLED_IMAGES } from "../assets/oled-images";
 import {
   logWaterIntake,
   getTodayWaterIntake,
@@ -66,6 +67,14 @@ export async function testWellnessNotificationRoute(
       "Click to log water intake",
       "water_intake"
     );
+    // broadcaster.broadcast({
+    //   type: "oled:image",
+    //   payload: {
+    //     image: OLED_IMAGES.hydration,
+    //     persistent: false,
+    //     durationMs: 30000,
+    //   },
+    // });
   } else if (type === "eye_strain") {
     showSystemNotification(
       "Look 20 feet away for 20 seconds! 👀",
